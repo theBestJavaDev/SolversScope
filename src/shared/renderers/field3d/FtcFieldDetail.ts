@@ -15,7 +15,9 @@
  *    texture with the real AndyMark tile outline (traced from the CAD, see tileOutline.ts) as a thin dark line, foam
  *    grain and a bump map is repeated once per tile. The texture's edges are the tiles' straight edges (see TILE_PITCH).
  *  - HIVE frame ("sign" meshes): the two sticker plates are trapezoids (0.766 m wide at the bottom, 0.696 m at the top,
- *    about 0.164 m along the slope). Each gets a yellow trapezoid plate with the BIOBUZZ mark.
+ *    about 0.164 m along the slope). Each gets the BIOBUZZ plate (every render mode).
+ *  - HIVE goals ("aprilTag_<id>" meshes): the four tag plates under the HIVEs (17 x 5 in) each get the real BIOBUZZ tag
+ *    cluster: four 36h11 tags, 3.25 in square, with the IDs and spacing of the FTC SDK's tag library (every render mode).
  */
 
 import * as THREE from "three";
@@ -28,6 +30,12 @@ const TILE_Y0 = 0.0102923; // m, a tile's bottom straight edge (field y)
 const STICKER_WIDTH = 0.766; // m, bottom edge
 const STICKER_TOP_WIDTH = 0.696; // m
 const STICKER_HEIGHT = 0.164; // m, along the slope
+/** HIVE goal tag plates: 17 x 5 in, carrying four 36h11 tags (3.25 in black square, so 3.25 * 10 / 8 in with the white border). */
+const TAG_PLATE_WIDTH_IN = 17;
+const TAG_PLATE_HEIGHT_IN = 5;
+const TAG_SIZE_IN = 3.25;
+const TAG_CENTERS_IN = [-6.5, -2.75, 2.75, 6.5]; // from the plate's center, IDs counting up left to right (FTC SDK cluster)
+const TAG_TEXTURE_URL = "textures/apriltag-36h11/";
 /**
  * The official BIOBUZZ plate artwork (FIRST / RTX): the plate on a white square (keyed out when it loads).
  * Relative to the page. It is FIRST's artwork, so it is not committed (see .gitignore); without it the
@@ -276,6 +284,125 @@ export function loadSignArtwork(url: string): Promise<HTMLCanvasElement | null> 
   });
 }
 
+/** Loads one 10 x 10 pixel 36h11 tag image (the black square plus its white border). Null when it can't be loaded. */
+function loadTagImage(id: number): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => resolve(null);
+    image.src = TAG_TEXTURE_URL + id.toString().padStart(3, "0") + ".png";
+  });
+}
+
+/**
+ * A tag plate's texture: a white plate with the four tags of a cluster (IDs firstId..firstId + 3, left to right as seen
+ * from outside) drawn without smoothing so the squares stay crisp. Null when none of the tag images could be loaded.
+ */
+export async function makeAprilTagPlateCanvas(firstId: number, pixelsPerInch = 80): Promise<HTMLCanvasElement | null> {
+  const images = await Promise.all(TAG_CENTERS_IN.map((_, i) => loadTagImage(firstId + i)));
+  if (images.every((image) => image === null)) return null;
+  const canvas = makeCanvas(TAG_PLATE_WIDTH_IN * pixelsPerInch, TAG_PLATE_HEIGHT_IN * pixelsPerInch);
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.imageSmoothingEnabled = false;
+  const sizePx = Math.round(TAG_SIZE_IN * (10 / 8) * pixelsPerInch);
+  images.forEach((image, i) => {
+    if (image === null) return;
+    const x = Math.round(canvas.width / 2 + TAG_CENTERS_IN[i] * pixelsPerInch - sizePx / 2);
+    const y = Math.round((canvas.height - sizePx) / 2);
+    ctx.drawImage(image, x, y, sizePx, sizePx);
+  });
+  return canvas;
+}
+
+/** Largest-eigenvalue eigenvector of a symmetric 3x3 matrix (power iteration), as a unit vector. */
+function principalAxis(matrix: number[][], start: THREE.Vector3): THREE.Vector3 {
+  const v = start.clone().normalize();
+  for (let i = 0; i < 64; i++) {
+    const next = new THREE.Vector3(
+      matrix[0][0] * v.x + matrix[0][1] * v.y + matrix[0][2] * v.z,
+      matrix[1][0] * v.x + matrix[1][1] * v.y + matrix[1][2] * v.z,
+      matrix[2][0] * v.x + matrix[2][1] * v.y + matrix[2][2] * v.z
+    );
+    if (next.lengthSq() < 1e-30) break;
+    v.copy(next.normalize());
+  }
+  return v;
+}
+
+/**
+ * Fills in a tag plate's texture coordinates from its own geometry, whatever way the plate is turned (the field's
+ * plates are tilted on the HIVE goals, the HIVE models' plates lie flat under the level bar). The plate is a thin flat
+ * 17 x 5 in sheet. Its front face is the one that points down (the tags face the field from under the HIVE), and seen
+ * from there the texture is upright when "up" is the short edge's direction that leads toward the middle of the
+ * HIVE / field (horizontally), so u runs left to right and v runs up that edge.
+ */
+export function mapAprilTagPlate(mesh: THREE.Mesh) {
+  const position = mesh.geometry.getAttribute("position");
+  const count = position.count;
+  const p = new THREE.Vector3();
+  const centroid = new THREE.Vector3();
+  for (let i = 0; i < count; i++) centroid.add(p.fromBufferAttribute(position, i));
+  centroid.divideScalar(Math.max(1, count));
+
+  // Principal axes of the vertices: the plate's long edge, then its short edge (the third is its thickness)
+  const covariance = [
+    [0, 0, 0],
+    [0, 0, 0],
+    [0, 0, 0]
+  ];
+  for (let i = 0; i < count; i++) {
+    p.fromBufferAttribute(position, i).sub(centroid);
+    const c = [p.x, p.y, p.z];
+    for (let r = 0; r < 3; r++) for (let k = 0; k < 3; k++) covariance[r][k] += c[r] * c[k];
+  }
+  const long = principalAxis(covariance, new THREE.Vector3(1, 0.3, 0.1));
+  const deflated = covariance.map((row, r) =>
+    row.map((value, k) => value - (long.getComponent(r) * long.getComponent(k)) * long.dot(principalAxisTimes(covariance, long)))
+  );
+  let short = principalAxis(deflated, new THREE.Vector3(0.1, 1, 0.3));
+  short = short.sub(long.clone().multiplyScalar(short.dot(long))).normalize();
+
+  // "Up" is the short edge's direction that points toward the middle, horizontally (z is up)
+  const up = short.clone();
+  const towardMiddle = up.x * centroid.x + up.y * centroid.y;
+  if (towardMiddle > 1e-4 || (Math.abs(towardMiddle) <= 1e-4 && up.z < 0)) up.negate();
+  const normal = long.clone().cross(up);
+  if (normal.z > 0) normal.negate(); // front face down
+  const right = new THREE.Vector3().crossVectors(normal.clone().negate(), up); // right x up = normal (toward the viewer)
+
+  let minR = Infinity;
+  let maxR = -Infinity;
+  let minU = Infinity;
+  let maxU = -Infinity;
+  for (let i = 0; i < count; i++) {
+    p.fromBufferAttribute(position, i);
+    const r = p.dot(right);
+    const u = p.dot(up);
+    minR = Math.min(minR, r);
+    maxR = Math.max(maxR, r);
+    minU = Math.min(minU, u);
+    maxU = Math.max(maxU, u);
+  }
+  const uv = new Float32Array(count * 2);
+  for (let i = 0; i < count; i++) {
+    p.fromBufferAttribute(position, i);
+    uv[i * 2] = (p.dot(right) - minR) / Math.max(1e-6, maxR - minR);
+    uv[i * 2 + 1] = (p.dot(up) - minU) / Math.max(1e-6, maxU - minU);
+  }
+  mesh.geometry.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+}
+
+/** covariance * v (helper for deflating the principal axis out of a covariance matrix). */
+function principalAxisTimes(matrix: number[][], v: THREE.Vector3): THREE.Vector3 {
+  return new THREE.Vector3(
+    matrix[0][0] * v.x + matrix[0][1] * v.y + matrix[0][2] * v.z,
+    matrix[1][0] * v.x + matrix[1][1] * v.y + matrix[1][2] * v.z,
+    matrix[2][0] * v.x + matrix[2][1] * v.y + matrix[2][2] * v.z
+  );
+}
+
 /** Fills in the texture coordinates of the floor meshes: one 0..1 span per tile. */
 function mapFloor(mesh: THREE.Mesh) {
   const position = mesh.geometry.getAttribute("position");
@@ -324,14 +451,58 @@ function mapSign(mesh: THREE.Mesh) {
   mesh.geometry.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
 }
 
-/** Applies the tile floor and the BIOBUZZ sign to a freshly loaded FTC field (cinematic mode only). */
-export function applyFtcFieldDetail(field: THREE.Object3D, maxAnisotropy = 8) {
+type DetailMode = "cinematic" | "standard" | "low-power";
+
+/** Physically based in cinematic mode, the cheap Phong look otherwise (like the rest of the field). */
+function makeDetailMaterial(map: THREE.Texture | null, mode: DetailMode): THREE.Material {
+  return mode === "cinematic"
+    ? new THREE.MeshPhysicalMaterial({
+        map: map,
+        side: THREE.DoubleSide,
+        roughness: 0.38,
+        metalness: 0,
+        clearcoat: 0.7,
+        clearcoatRoughness: 0.2
+      })
+    : new THREE.MeshPhongMaterial({ map: map, side: THREE.DoubleSide, specular: 0x333333, shininess: 40 });
+}
+
+/** True for the separate tag plate meshes made by OptimizeGeometries ("aprilTag_<first id>"). */
+export function isAprilTagPlate(object: THREE.Object3D): object is THREE.Mesh {
+  return object instanceof THREE.Mesh && object.name.startsWith("aprilTag_");
+}
+
+/**
+ * Turns a tag plate mesh (field or robot model, e.g. the sim's HIVE models) into a real tag plate: a white plate right
+ * away, with the four tags of its cluster once their images have loaded. The material is shared by every instance of
+ * the mesh, so the tags appear on all of them.
+ */
+export function applyAprilTagPlate(mesh: THREE.Mesh, mode: DetailMode = "cinematic", maxAnisotropy = 8) {
+  mapAprilTagPlate(mesh);
+  const material = makeDetailMaterial(null, mode);
+  mesh.material = material;
+  void makeAprilTagPlateCanvas(Number(mesh.name.slice("aprilTag_".length))).then((canvas) => {
+    if (canvas === null) return;
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = maxAnisotropy;
+    (material as THREE.MeshPhongMaterial).map = texture;
+    material.needsUpdate = true;
+  });
+}
+
+/**
+ * Applies the BIOBUZZ sign and the HIVE goal AprilTags to a freshly loaded FTC field in every render mode, and the
+ * tile floor in cinematic mode only.
+ */
+export function applyFtcFieldDetail(field: THREE.Object3D, maxAnisotropy = 8, mode: DetailMode = "cinematic") {
+  const cinematic = mode === "cinematic";
   let tileTexture: THREE.CanvasTexture | null = null;
   let signTexture: THREE.CanvasTexture | null = null;
-  const signMaterials: THREE.MeshPhysicalMaterial[] = [];
+  const signMaterials: THREE.Material[] = [];
   field.traverse((object) => {
     if (!(object instanceof THREE.Mesh)) return;
-    if (object.name === "carpet" && object.geometry.getAttribute("position") !== undefined) {
+    if (cinematic && object.name === "carpet" && object.geometry.getAttribute("position") !== undefined) {
       if (tileTexture === null) {
         tileTexture = new THREE.CanvasTexture(makeTileCanvas());
         tileTexture.wrapS = tileTexture.wrapT = THREE.RepeatWrapping;
@@ -353,16 +524,11 @@ export function applyFtcFieldDetail(field: THREE.Object3D, maxAnisotropy = 8) {
         signTexture.anisotropy = maxAnisotropy;
       }
       mapSign(object);
-      const material = new THREE.MeshPhysicalMaterial({
-        map: signTexture,
-        side: THREE.DoubleSide,
-        roughness: 0.38,
-        metalness: 0,
-        clearcoat: 0.7,
-        clearcoatRoughness: 0.2
-      });
+      const material = makeDetailMaterial(signTexture, mode);
       object.material = material;
       signMaterials.push(material);
+    } else if (isAprilTagPlate(object)) {
+      applyAprilTagPlate(object, mode, maxAnisotropy);
     }
   });
   if (signMaterials.length > 0) {
@@ -372,7 +538,7 @@ export function applyFtcFieldDetail(field: THREE.Object3D, maxAnisotropy = 8) {
       real.colorSpace = THREE.SRGBColorSpace;
       real.anisotropy = maxAnisotropy;
       signMaterials.forEach((material) => {
-        material.map = real;
+        (material as THREE.MeshPhongMaterial).map = real;
         // The artwork's own outline and mounting holes are transparent: cut them out
         material.alphaTest = 0.5;
         material.needsUpdate = true;

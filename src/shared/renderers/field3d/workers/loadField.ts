@@ -91,7 +91,13 @@ self.onmessage = (event) => {
         fieldMeshes.carpet.forEach((mesh) => {
           mesh.name = "carpet";
         });
-        [...fieldMeshes.normal, ...fieldMeshes.transparent, ...fieldMeshes.carpet, ...fieldMeshes.sign].forEach((mesh) =>
+        [
+          ...fieldMeshes.normal,
+          ...fieldMeshes.transparent,
+          ...fieldMeshes.carpet,
+          ...fieldMeshes.sign,
+          ...fieldMeshes.aprilTags
+        ].forEach((mesh) =>
           field.add(mesh)
         );
       } else {

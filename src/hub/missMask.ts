@@ -22,7 +22,19 @@ import TabType from "../shared/TabType";
 export const POLLEN_BY_ID_KEY = "RealOutputs/Field/PollenById";
 export const POLLEN_LIST_KEY = "RealOutputs/Field/Pollen";
 export const MASKED_POLLEN_KEY = "/SolversSim/Anim/Pollen";
+/** The POLLEN list with the FLOWER pickups animated (flowerAnim.ts). */
+export const FLOWER_POLLEN_KEY = "/SolversSim/Anim/FlowerPollen";
 const PARKED: [number, number, number] = [1e4, 1e4, -1000];
+
+/**
+ * True when this log lists its POLLEN per ball (`Field/PollenById`), which is what lets a missed shot's real ball be hidden.
+ * Without it the random match must not draw anything: its missed ball would appear on top of the log's own ball,
+ * which still sits in the CELL, so the field would show more balls than the robot ever held.
+ */
+export function canHideMissedBalls(): boolean {
+  const raw = window.log.getRaw(POLLEN_BY_ID_KEY, -Infinity, Infinity);
+  return raw !== undefined && raw.timestamps.length > 0;
+}
 
 /** Per ball id, when it was taken by the robot (the "->HELD" transitions of the sim's own bookkeeping). */
 function heldTimes(): Map<string, number[]> {
@@ -87,11 +99,18 @@ export function usePollenSource(key: string) {
     const controller = tab.controller as { sources?: { logKey: string }[] } | null;
     if (controller === null || !Array.isArray(controller.sources)) continue;
     for (const source of controller.sources) {
-      if ((source.logKey === POLLEN_LIST_KEY || source.logKey === MASKED_POLLEN_KEY) && source.logKey !== key) {
+      const isPollenList =
+        source.logKey === POLLEN_LIST_KEY || source.logKey === MASKED_POLLEN_KEY || source.logKey === FLOWER_POLLEN_KEY;
+      if (isPollenList && source.logKey !== key) {
         source.logKey = key;
         changed = true;
       }
     }
   }
   if (changed) window.tabs.restoreState(state);
+}
+
+/** The list the 3D views draw when no missed ball is hidden: the FLOWER-animated copy if this log has one, else the plain list. */
+export function defaultPollenKey(): string {
+  return window.log.getFieldKeys().includes(FLOWER_POLLEN_KEY) ? FLOWER_POLLEN_KEY : POLLEN_LIST_KEY;
 }

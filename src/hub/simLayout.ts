@@ -9,6 +9,7 @@ import { TabsState } from "../shared/HubState";
 import LoggableType from "../shared/log/LoggableType";
 import TabType, { SOLVERS_TAB_TYPES } from "../shared/TabType";
 import { createUUID } from "../shared/util";
+import { applyFlowerAnimation } from "./flowerAnim";
 
 /**
  * Opening a BioBuzz SimLoop log (the robot repo's `simAuto` / sim tests) with no field views set up
@@ -327,6 +328,14 @@ export async function maybeApplySimLayout(logName: string): Promise<void> {
   useTippingField();
   restoreRealSources();
   restoreHiveModels();
+  if (!window.preferences?.plainMode) {
+    // POLLEN rolls down a FLOWER and into the robot when the pollinator takes it, instead of vanishing and reappearing
+    try {
+      applyFlowerAnimation();
+    } catch (error) {
+      console.error("FLOWER pickup animation failed", error);
+    }
+  }
   if (window.preferences?.plainMode) {
     removeSolversTabs();
   } else {

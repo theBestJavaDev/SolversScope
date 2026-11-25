@@ -4,9 +4,9 @@
   "version": "1.0.0",
   "description": "Robot telemetry application",
   "author": {
-    "name": "Littleton Robotics",
-    "email": "software@littletonrobotics.org",
-    "url": "https://littletonrobotics.org"
+    "name": "FTC Team 23511 Seattle Solvers",
+    "email": "software@seattlesolvers.org",
+    "url": "https://seattlesolvers.org"
   },
   "license": "BSD-3-Clause",
   "main": "bundles/main.js",
@@ -96,8 +96,8 @@
     ]
   },
   "build": {
-    "appId": "org.littletonrobotics.advantagescope",
-    "copyright": "Copyright © 2021-2026 Littleton Robotics",
+    "appId": "org.seattlesolvers.solverscope",
+    "copyright": "Copyright © 2021-2026 FTC Team 23511 Seattle Solvers",
     "npmRebuild": false,
     "publish": [],
     "electronFuses": {

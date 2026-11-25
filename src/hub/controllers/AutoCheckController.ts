@@ -21,7 +21,7 @@ import { setLatestAutoCheck } from "../autoCheckStore";
 import { extractAutoShots, isRobotSimLog } from "../autoShotExtract";
 import WorkerManager from "../WorkerManager";
 import { getSharedShotLabConfig } from "./SimForm";
-import { POLLEN_LIST_KEY, applyMissMask, usePollenSource } from "../missMask";
+import { applyMissMask, canHideMissedBalls, defaultPollenKey, usePollenSource } from "../missMask";
 import TabController from "./TabController";
 
 const LOG_PREFIX = "/SolversSim/AutoCheck";
@@ -268,7 +268,7 @@ export default class AutoCheckController implements TabController {
       // The sim already shoots like a real robot (some balls miss and are simply not in the CELL), so this log IS
       // the match: report its own results and draw nothing on top of it
       window.log.deleteFieldsWithPrefix(LOG_PREFIX + "/Match");
-      usePollenSource(POLLEN_LIST_KEY);
+      usePollenSource(defaultPollenKey());
       const shots = this.lastRun.shots;
       this.command = {
         ...this.command,
@@ -303,7 +303,9 @@ export default class AutoCheckController implements TabController {
     });
     // Missed pieces over time: in flight, then resting where they stopped. Each also gets a red trail
     // while it flies (until it lands, at most TRAIL_SECONDS), in one of the trail slots.
-    const misses = match.shots.filter((s) => s.path.length > 0);
+    // A perfect-shooter log with no per-ball list can't have its own ball hidden, so drawing the miss as well would
+    // show a duplicate ball: leave the 3D view as the log has it and only report the match
+    const misses = canHideMissedBalls() ? match.shots.filter((s) => s.path.length > 0) : [];
     if (misses.length > 0) {
       const end = Math.max(log.getTimestampRange()[1], ...misses.map((s) => s.path[s.path.length - 1].time));
       const trailEnds = misses.map((s) => s.time + Math.min(TRAIL_SECONDS, firstLanding(s.path) - s.time));

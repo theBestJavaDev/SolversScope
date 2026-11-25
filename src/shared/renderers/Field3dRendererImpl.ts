@@ -811,8 +811,9 @@ export default class Field3dRendererImpl implements TabRenderer {
         }).then((result) => {
           const loader = new THREE.ObjectLoader();
           this.field = loader.parse(result.field);
-          if (this.mode === "cinematic" && fieldConfig.isFTC) {
-            applyFtcFieldDetail(this.field, this.renderer.capabilities.getMaxAnisotropy());
+          if (fieldConfig.isFTC) {
+            // The sign and the AprilTags are used in every mode; the tile floor detail is cinematic only
+            applyFtcFieldDetail(this.field, this.renderer.capabilities.getMaxAnisotropy(), this.mode);
           }
           this.fieldStagedPieces = loader.parse(result.fieldStagedPieces);
           Object.entries(result.fieldPieces).forEach(([name, meshData]) => {

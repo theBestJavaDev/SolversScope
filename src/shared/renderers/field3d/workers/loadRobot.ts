@@ -57,6 +57,8 @@ self.onmessage = (event) => {
       let sceneMeshes: THREE.Mesh[] = [];
       if (optimized.normal.length > 0) sceneMeshes.push(optimized.normal[0]);
       if (optimized.transparent.length > 0) sceneMeshes.push(optimized.transparent[0]);
+      // Tag plates (e.g. the sim's HIVE models) stay separate so RobotManager can give them real AprilTags
+      optimized.aprilTags.forEach((mesh) => sceneMeshes.push(mesh));
       meshes.push(sceneMeshes.map((mesh) => mesh.toJSON()));
     }
 

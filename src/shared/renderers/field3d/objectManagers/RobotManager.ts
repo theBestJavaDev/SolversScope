@@ -18,6 +18,7 @@ import { Units } from "../../../units";
 import { transformPx } from "../../../util";
 import { Field3dRendererCommand_GhostObj, Field3dRendererCommand_RobotObj } from "../../Field3dRenderer";
 import { quaternionToRotation3d, rotation3dToQuaternion } from "../../Field3dRendererImpl";
+import { applyAprilTagPlate, isAprilTagPlate } from "../FtcFieldDetail";
 import ObjectManager from "../ObjectManager";
 import { FTC_MULTIPLIER, XR_MAX_RADIUS } from "../OptimizeGeometries";
 import ResizableInstancedMesh from "../ResizableInstancedMesh";
@@ -278,6 +279,10 @@ export default class RobotManager extends ObjectManager<
             result.forEach((sceneMeshJSONs, index) => {
               // Load meshes
               let sceneMeshes: THREE.Mesh[] = sceneMeshJSONs.map((json) => loader.parse(json) as THREE.Mesh);
+              // Real AprilTags on any tag plates (shared material, so every instance gets them)
+              sceneMeshes.forEach((mesh) => {
+                if (isAprilTagPlate(mesh)) applyAprilTagPlate(mesh, this.mode);
+              });
               sceneMeshes.forEach((mesh) => {
                 if (index === 0) {
                   mesh.geometry.computeBoundingBox();

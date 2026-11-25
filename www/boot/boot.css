@@ -1,0 +1,219 @@
+/*
+  Copyright (c) 2021-2026 Littleton Robotics & FTC Team 23511 Seattle Solvers
+  http://github.com/Mechanical-Advantage
+
+  Use of this source code is governed by a BSD
+  license that can be found in the LICENSE file
+  at the root directory of this project.
+*/
+
+/*
+  SolversScope boot screen + shutter loader. boot-card.png is the icon with its lens removed; the lens blades
+  (www/boot/blade*.png) are cut from icons/app/boot-up-icon.ico and animated with CSS.
+*/
+
+/* ---------- Boot screen ---------- */
+
+#boot-screen {
+  /* The card (the icon artwork) fits inside the window at any size; the rest of the window is painted with
+     the card's own vertical gradient (stops are placed relative to the card's height) so it fills the page seamlessly. */
+  --boot-h: min(100vh, calc(100vw * 1578 / 2715));
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    to bottom,
+    rgb(255, 231, 93) calc(50% - var(--boot-h) / 2),
+    rgb(255,231,93) calc(50% - var(--boot-h) / 2 + var(--boot-h) * 0.0),
+    rgb(254,233,110) calc(50% - var(--boot-h) / 2 + var(--boot-h) * 0.1),
+    rgb(252,235,127) calc(50% - var(--boot-h) / 2 + var(--boot-h) * 0.2),
+    rgb(251,238,145) calc(50% - var(--boot-h) / 2 + var(--boot-h) * 0.3),
+    rgb(250,240,163) calc(50% - var(--boot-h) / 2 + var(--boot-h) * 0.4),
+    rgb(248,242,180) calc(50% - var(--boot-h) / 2 + var(--boot-h) * 0.5),
+    rgb(249,244,189) calc(50% - var(--boot-h) / 2 + var(--boot-h) * 0.6),
+    rgb(249,245,197) calc(50% - var(--boot-h) / 2 + var(--boot-h) * 0.7),
+    rgb(250,246,205) calc(50% - var(--boot-h) / 2 + var(--boot-h) * 0.8),
+    rgb(251,247,213) calc(50% - var(--boot-h) / 2 + var(--boot-h) * 0.9),
+    rgb(252,249,222) calc(50% - var(--boot-h) / 2 + var(--boot-h) * 1.0)
+  );
+  opacity: 1;
+  transition: opacity 0.4s ease-in-out;
+}
+
+#boot-screen.boot-hide {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#boot-screen .boot-card {
+  position: relative;
+  width: min(100vw, calc(100vh * 2715 / 1578));
+  aspect-ratio: 2715 / 1578;
+  animation: boot-card-in 0.5s ease-out both;
+}
+
+#boot-screen .boot-card > img.boot-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+@keyframes boot-card-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ---------- Iris blades ---------- */
+
+/*
+  The five blades are the exact, unchanged silhouettes cut from icons/app/boot-up-icon.ico (blade*.png), placed
+  where they are in the icon. The whole lens turns about its center like a loading symbol.
+*/
+
+.iris {
+  position: absolute;
+  inset: 0;
+  /* Anything that swings past the lens circle (center 28.47% / 48.99%) is clipped */
+  clip-path: circle(31.3% at 28.47% 48.99%);
+  /* Spin about the lens center (the clip circle is centered there too, so it stays put) */
+  transform-origin: 28.47% 48.99%;
+  will-change: transform;
+}
+
+.iris .iris-blade {
+  position: absolute;
+  background-size: 100% 100%;
+}
+
+.iris .iris-blade.b0 {
+  left: 12.818%;
+  top: 4.753%;
+  width: 28.950%;
+  height: 45.564%;
+  transform-origin: 69.97% -5.26%;
+  background-image: url("blade0.png");
+}
+
+.iris .iris-blade.b1 {
+  left: 24.309%;
+  top: 14.449%;
+  width: 29.945%;
+  height: 40.748%;
+  transform-origin: 104.13% 63.38%;
+  background-image: url("blade1.png");
+}
+
+.iris .iris-blade.b2 {
+  left: 2.726%;
+  top: 16.033%;
+  width: 23.315%;
+  height: 54.056%;
+  transform-origin: 5.27% 21.39%;
+  background-image: url("blade2.png");
+}
+
+.iris .iris-blade.b3 {
+  left: 31.971%;
+  top: 34.601%;
+  width: 21.326%;
+  height: 58.302%;
+  transform-origin: 48.26% 94.85%;
+  background-image: url("blade3.png");
+}
+
+.iris .iris-blade.b4 {
+  left: 5.083%;
+  top: 58.492%;
+  width: 33.738%;
+  height: 34.854%;
+  transform-origin: 13.09% 70.93%;
+  background-image: url("blade4.png");
+}
+
+/* Boot: one full eased turn */
+#boot-screen .iris {
+  animation: iris-spin 1.3s cubic-bezier(0.65, 0, 0.35, 1) 1.0s both;
+}
+
+@keyframes iris-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Small shutter spinner (replaces the rolling cubes on 3D fields) ---------- */
+
+div.spinner-shutter {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  user-select: none;
+}
+
+div.spinner-shutter .iris {
+  /* Card-sized box positioned so the shutter's center lands in the middle of the 44px square. */
+  inset: auto;
+  width: 86px;
+  height: 50px;
+  left: -2.5px;
+  top: -2.5px;
+}
+
+div.spinner-shutter .iris .iris-blade {
+  background: var(--solvers-gold, #f2ce00);
+  background-image: none;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+div.spinner-shutter .iris .iris-blade.b0 {
+  -webkit-mask-image: url("blade0.png");
+  mask-image: url("blade0.png");
+}
+
+div.spinner-shutter .iris .iris-blade.b1 {
+  -webkit-mask-image: url("blade1.png");
+  mask-image: url("blade1.png");
+}
+
+div.spinner-shutter .iris .iris-blade.b2 {
+  -webkit-mask-image: url("blade2.png");
+  mask-image: url("blade2.png");
+}
+
+div.spinner-shutter .iris .iris-blade.b3 {
+  -webkit-mask-image: url("blade3.png");
+  mask-image: url("blade3.png");
+}
+
+div.spinner-shutter .iris .iris-blade.b4 {
+  -webkit-mask-image: url("blade4.png");
+  mask-image: url("blade4.png");
+}
+
+div.spinner-cubes-container.animating div.spinner-shutter .iris {
+  animation: iris-spin 1.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #boot-screen .boot-card {
+    animation: none;
+  }
+}

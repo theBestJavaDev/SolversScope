@@ -17,6 +17,34 @@ export const CINEMATIC_MAX_RADIUS = 0.02;
 export const FTC_MULTIPLIER = 0.25; // FTC components are smaller, adjust appropriately to avoid cutting too agressively
 
 /**
+ * The original (CAD) name of a mesh. GLTFLoader renames nodes ("am-5883: Panel Sticker" becomes "am-5883_Panel_Sticker",
+ * spaces and colons are changed) and keeps the original in userData.name, so match on that.
+ */
+export function getMeshLabel(mesh: THREE.Object3D): string {
+  const original = mesh.userData?.name;
+  return typeof original === "string" ? original : mesh.name;
+}
+
+/**
+ * First AprilTag ID of the four-tag cluster on each BIOBUZZ HIVE goal's tag plate (from the FTC SDK's
+ * AprilTagGameDatabase.getBioBuzzTagLibrary(): RED SCORING 30-33, RED AUDIENCE 34-37, BLUE AUDIENCE 38-41,
+ * BLUE SCORING 42-45). Null when the mesh is not one of the plates ("... Goal April Tag (Audience|Scoring)").
+ */
+export function getAprilTagPlateFirstId(label: string): number | null {
+  const text = label.toLowerCase();
+  if (!text.includes("goal april tag")) return null;
+  const blue = text.includes("blue");
+  const red = text.includes("red");
+  const audience = text.includes("audience");
+  const scoring = text.includes("scoring");
+  if (red && scoring) return 30;
+  if (red && audience) return 34;
+  if (blue && audience) return 38;
+  if (blue && scoring) return 42;
+  return null;
+}
+
+/**
  * Cinematic mode draws everything with physically based materials (lit by the environment map and
  * soft shadows in Field3dRendererImpl); the other modes keep the cheap Phong look.
  */
@@ -89,8 +117,10 @@ export default function optimizeGeometries(
   normal: THREE.Mesh[];
   transparent: THREE.Mesh[];
   carpet: THREE.Mesh[];
-  /** Cinematic only: the HIVE frame's two sticker plates, kept apart so they can carry the BIOBUZZ sign. */
+  /** The HIVE frame's two sticker plates, kept apart so they can carry the BIOBUZZ sign (every render mode). */
   sign: THREE.Mesh[];
+  /** The four HIVE goal tag plates, kept apart so they can carry real AprilTags. Named "aprilTag_<first id>". */
+  aprilTags: THREE.Mesh[];
 } {
   let geometries = getGeometries(object, mode, enableSimplification, isFTC, slicingSize);
 
@@ -147,12 +177,21 @@ export default function optimizeGeometries(
     mesh.receiveShadow = true;
     signMeshes.push(mesh);
   });
+  let aprilTagMeshes: THREE.Mesh[] = [];
+  geometries.aprilTags.forEach((plate) => {
+    let mesh = new THREE.Mesh(plate.geometry, makeMaterial("normal", mode, materialSpecular, materialShininess));
+    mesh.name = "aprilTag_" + plate.firstId.toString();
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    aprilTagMeshes.push(mesh);
+  });
   disposeObject(object);
   return {
     normal: normalMeshes,
     transparent: transparentMeshes,
     carpet: carpetMeshes,
-    sign: signMeshes
+    sign: signMeshes,
+    aprilTags: aprilTagMeshes
   };
 }
 
@@ -167,8 +206,10 @@ function getGeometries(
   transparent: THREE.BufferGeometry[][];
   carpet: THREE.BufferGeometry[][];
   sign: THREE.BufferGeometry[];
+  aprilTags: { geometry: THREE.BufferGeometry; firstId: number }[];
 } {
   let sign: THREE.BufferGeometry[] = [];
+  let aprilTags: { geometry: THREE.BufferGeometry; firstId: number }[] = [];
   let normal: THREE.BufferGeometry[][] = [];
   let transparent: THREE.BufferGeometry[][] = [];
   let carpet: THREE.BufferGeometry[][] = [];
@@ -248,9 +289,16 @@ function getGeometries(
         }
       }
 
-      // Cinematic: the HIVE sticker plates stay separate meshes (FtcFieldDetail gives them the BIOBUZZ sign)
-      if (mode === "cinematic" && mesh.name.includes("Panel Sticker")) {
+      // The HIVE sticker plates and tag plates stay separate meshes in every mode (FtcFieldDetail gives them the
+      // BIOBUZZ sign and the real AprilTags)
+      const label = getMeshLabel(mesh);
+      if (isFTC && label.includes("Panel Sticker")) {
         sign.push(geometry);
+        return;
+      }
+      const plateFirstId = isFTC ? getAprilTagPlateFirstId(label) : null;
+      if (plateFirstId !== null) {
+        aprilTags.push({ geometry: geometry, firstId: plateFirstId });
         return;
       }
 
@@ -284,6 +332,7 @@ function getGeometries(
     normal: normal,
     transparent: transparent,
     carpet: carpet,
-    sign: sign
+    sign: sign,
+    aprilTags: aprilTags
   };
 }

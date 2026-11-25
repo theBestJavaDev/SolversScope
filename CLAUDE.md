@@ -103,10 +103,25 @@ SolversScope watches). Per-computer setup:
   HIVE tips only on what is physically in it (186 g rule, `BioBuzzField`). When a log has that flag Auto Check reports the log's own
   hits/misses and draws no random match. Older (perfect-robot) logs still get the random match; `src/hub/missMask.ts` then hides
   the real ball of each missed shot (`Field/PollenById`, one slot per ball id) so the CELL doesn't also show it.
-- **Cinematic field detail:** `field3d/FtcFieldDetail.ts` (main thread, after the worker loads the field) puts a puzzle-tile texture
-  with thick seams on the floor ("carpet" meshes; seams on 24 in multiples) and the BIOBUZZ yellow trapezoid sign on the HIVE
-  frame's two "Panel Sticker" plates (kept as separate "sign" meshes by `OptimizeGeometries`, cinematic only). The sign art is drawn
-  in code: replace `makeSignCanvas` with the official artwork when it is available.
+  A perfect-shooter log with no `Field/PollenById` can't have a ball hidden, so then the random match draws nothing in the 3D view
+  (`canHideMissedBalls`): never draw a miss next to the log's own ball (that shows duplicate POLLEN). The robot repo's `RunAutos` now turns
+  the shooter error on by default (`BioBuzzSim.useShotError`, `-Dsim.shot=...`, `-Dsim.shotSeed=<n>`), and its idle intake frame bumps loose balls.
+- **Field detail (sign + AprilTags):** `field3d/FtcFieldDetail.ts` (main thread, after the worker loads the field). In every render
+  mode it puts the BIOBUZZ plate artwork (`www/textures/biobuzz-sign.webp`, not committed; a drawn plate is the fallback) on the HIVE
+  frame's two "Panel Sticker" plates and the real BIOBUZZ AprilTags on the four white "Goal April Tag" plates under the HIVEs
+  (36h11, four 3.25 in tags per plate with the FTC SDK's cluster IDs and spacing: RED SCORING 30-33, RED AUDIENCE 34-37, BLUE
+  AUDIENCE 38-41, BLUE SCORING 42-45; textures come from `www/textures/apriltag-36h11/`). The sim's HIVE bars are separate robot models
+  (`Robot_BioBuzzHive*`), so `loadRobot.ts` also passes tag plates through and `RobotManager` calls `applyAprilTagPlate` on them. In cinematic mode only it also puts a
+  puzzle-tile texture with thick seams on the floor ("carpet" meshes; seams on 24 in multiples). `OptimizeGeometries.ts` keeps the
+  plates as separate "sign" / "aprilTag_<first id>" meshes. GLTFLoader renames nodes ("am-5883: Panel Sticker" becomes
+  "am-5883_Panel_Sticker"), so match plates on the original name with `getMeshLabel` (`userData.name`), never on `mesh.name`.
+  The sign art is drawn in code as a fallback: replace `makeSignCanvas` with the official artwork when it is available.
+- **FLOWER pickup animation:** `src/hub/flowerAnim.ts` (run from `simLayout.maybeApplySimLayout`, not in plain mode). The robot sim moves a POLLEN from a FLOWER
+  into the robot in one tick (`<id> SCORED->HELD pollinator-wedge`) and the balls above drop one slot in that same tick. This replays it as
+  motion in a copy of `Field/Pollen` (`/SolversSim/Anim/FlowerPollen`, which the 3D views draw; `defaultPollenKey()` / `usePollenSource` keep
+  them pointed at it): the ball taken rolls out of the FLOWER's bottom along the floor and up into the robot, ending where `Field/HeldPollen`
+  draws it, and the balls above glide down a slot. `Field/Pollen` has no ball ids, so balls are found by position (FLOWER columns from the first
+  frame; the taken ball is the lowest in the column the wedge faces). It only draws; the log's data is untouched.
 - **Drive Sim ammo:** `Intake.ts`: the robot holds at most 4 (G407), a shot uses one, a miss lands on the floor and is picked up by
   driving over it (HUD chip, `/Held` log).
 - **Auto Check tuning:** each shot also gets where it crosses the CELL mouth (with spin) and the exit speed that
