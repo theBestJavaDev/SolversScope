@@ -2,18 +2,19 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/docs/img/banner-ltr-dark.png">
     <source media="(prefers-color-scheme: light)" srcset="docs/docs/img/banner-ltr-light.png">
-    <img alt="AdvantageScope" src="docs/docs/img/banner-ltr-light.png">
+    <img alt="SolversScope" src="docs/docs/img/banner-ltr-light.png">
   </picture>
 </h1>
 
 [![Build](https://github.com/Mechanical-Advantage/AdvantageScope/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/Mechanical-Advantage/AdvantageScope/actions/workflows/build.yml)
 
-AdvantageScope is a robot diagnostics, log review/analysis, and data visualization application for FIRST teams developed by Team 6328. It reads logs in WPILOG, Hoot (CTRE), REVLOG (REV Robotics), Road Runner, CSV, NI DS log, and RLOG file formats, plus live robot data viewing using NT4, Phoenix, RLOG, or FTC Dashboard streaming. AdvantageScope can be used with any WPILib project, but is also optimized for use with our [AdvantageKit](https://docs.advantagekit.org) log replay framework. Note that **AdvantageKit is not required to use AdvantageScope**.
+**SolversScope** is an advanced robot diagnostics, log review/analysis, and simulation/teleop data visualization application custom-developed for **FTC Team 23511 Seattle Solvers** (forked from AdvantageScope by Team 6328). It reads logs in WPILOG, Hoot (CTRE), REVLOG (REV Robotics), Road Runner, CSV, NI DS log, and RLOG file formats, plus live robot data viewing using NT4, Phoenix, RLOG, or FTC Dashboard streaming. 
 
-AdvantageScope includes the following tools:
-
+SolversScope includes the following features & tools:
+- High-accuracy 6-DoF rigid body physics engine with stochastic randomness tolerance and non-linear impulse bouncing
+- Interactive Teleop SIM test driving with **WASD**, **QE** (turning), **Spacebar** (launching), **Enter** (intake), and **P** (Pollinator arm toggle)
 - A wide selection of flexible graphs and charts
-- 2D and 3D field visualizations of pose data, with customizable CAD-based robots
+- 2D and 3D field visualizations of pose data, with custom FTC Team 23511 Seattle Solvers CAD robots
 - Synchronized video playback from a separately loaded match video
 - Joystick visualization, showing driver actions on customizable controller representations
 - Swerve drive module vector displays
@@ -21,8 +22,6 @@ AdvantageScope includes the following tools:
 - Log statistics analysis
 - Flexible export options, with support for CSV and WPILOG
 
-**View the [online documentation](https://docs.advantagescope.org) or find it offline by clicking the 📖 icon in the tab bar.**
-
-Feedback, feature requests, and bug reports are welcome on the [issues page](https://github.com/Mechanical-Advantage/AdvantageScope/issues). See the [contribution page](CONTRIBUTING.md) for more information on contributing to AdvantageScope. For non-public inquiries, please send a message to software@team6328.org.
+For questions, feedback, or support regarding SolversScope, contact FTC Team 23511 Seattle Solvers.
 
 ![Example screenshot](/docs/docs/img/screenshot-light.png)
