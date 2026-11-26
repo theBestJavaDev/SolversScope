@@ -567,6 +567,10 @@ export default class Field3dController implements TabController {
       });
     }
 
+    // SolversScope: with no log open, the BioBuzz field still shows its HIVEs
+    const restingHives = restingHiveObjects(this.FIELD_SELECT.value);
+    objects.push(...restingHives);
+
     // Get all robot models
     let allRobotModels: Set<string> = new Set();
     let allSources = this.sourceList.getState();
@@ -575,6 +579,7 @@ export default class Field3dController implements TabController {
         allRobotModels.add(source.options.model);
       }
     });
+    restingHives.forEach((object) => allRobotModels.add(object.model));
 
     return {
       field: this.FIELD_SELECT.value,
@@ -586,6 +591,40 @@ export default class Field3dController implements TabController {
       allRobotModels: [...allRobotModels]
     };
   }
+}
+
+/** SolversScope: the BioBuzz HIVEs at rest, where every robot sim log starts them (pivot pose). */
+const RESTING_HIVES: { model: string; translation: [number, number, number]; rotation: [number, number, number, number] }[] = [
+  {
+    model: "BioBuzz HIVE Red",
+    translation: [0, -0.32385, 1.11633],
+    rotation: [0.9659258262890683, 0, -0.25881904510252074, 0]
+  },
+  {
+    model: "BioBuzz HIVE Blue",
+    translation: [0, 0.32385, 1.11633],
+    rotation: [0.9659258262890683, 0, 0.25881904510252074, 0]
+  }
+];
+
+/** The resting HIVEs to draw on the BioBuzz sim field while no log is open (once one is, the log places them). */
+function restingHiveObjects(field: string): Extract<Field3dRendererCommand_AnyObj, { type: "robot" }>[] {
+  if (field !== "FTC:BioBuzz Sim Field" || window.log.getFieldKeys().length > 0) return [];
+  const robots = window.assets?.robots ?? [];
+  return RESTING_HIVES.filter((hive) => robots.some((robot) => robot.name === hive.model)).map((hive) => ({
+    type: "robot",
+    model: hive.model,
+    poses: [
+      {
+        pose: { translation: [...hive.translation], rotation: [...hive.rotation] },
+        annotation: { is2DSource: false }
+      }
+    ],
+    components: [],
+    mechanisms: { xz: null, yz: null },
+    visionTargets: [],
+    swerveModuleVelocities: []
+  }));
 }
 
 /**

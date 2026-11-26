@@ -244,9 +244,14 @@ export default class MultiFieldController implements TabController {
     const base = commands[0];
     const objects = [...base.objects];
     const models = new Set(base.allRobotModels);
+    // Objects already on run A's field in the same place (e.g. the resting HIVEs before any run loads)
+    const onBase = new Set(
+      base.objects.filter((object) => object.type === "robot").map((object) => object.model + JSON.stringify(object.poses))
+    );
     commands.slice(1).forEach((command, i) => {
       command.objects.forEach((object) => {
         if (object.type !== "robot") return;
+        if (onBase.has(object.model + JSON.stringify(object.poses))) return;
         const ghost: Field3dRendererCommand_GhostObj = {
           ...object,
           type: "ghost",

@@ -1227,6 +1227,11 @@ div.multifield-controls {
   flex-direction: column;
 }
 
+/* The hub hides other tabs' controls with [hidden]; display: flex above would override it */
+div.multifield-controls[hidden] {
+  display: none;
+}
+
 div.multifield-toolbar {
   display: flex;
   align-items: center;

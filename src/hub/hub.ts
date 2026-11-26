@@ -7,6 +7,7 @@
 
 import { AdvantageScopeAssets } from "../shared/AdvantageScopeAssets";
 import { HubState } from "../shared/HubState";
+import TabType from "../shared/TabType";
 import NamedMessage from "../shared/NamedMessage";
 import Preferences, { getRobotAddress } from "../shared/Preferences";
 import Selection from "../shared/Selection";
@@ -203,9 +204,25 @@ function saveState(): HubState {
   };
 }
 
+/**
+ * SolversScope Multisim: runs from an earlier session aren't loaded when the app opens, so the
+ * Multisim tab starts with one empty field instead of last session's run names.
+ */
+function clearMultisimPanes(state: HubState) {
+  if (window.log.getFieldKeys().length > 0) return;
+  state.tabs.tabs.forEach((tab) => {
+    if (tab.type !== TabType.MultiField) return;
+    const controller = tab.controller as { panes?: { title: string; field3d: unknown }[]; overlay?: boolean } | null;
+    if (controller === null || !Array.isArray(controller.panes) || controller.panes.length === 0) return;
+    controller.panes = [{ title: "Field 1", field3d: controller.panes[0].field3d }];
+    controller.overlay = false;
+  });
+}
+
 /** Restores to the provided state. */
 function restoreState(state: HubState) {
   window.sidebar.restoreState(state.sidebar);
+  clearMultisimPanes(state);
   window.tabs.restoreState(state.tabs);
   syncFieldToLog(); // SolversScope: the sim tabs keep a field that shows the HIVEs until a sim log opens
 }
