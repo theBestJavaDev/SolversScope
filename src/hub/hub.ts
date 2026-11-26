@@ -31,7 +31,7 @@ import { NT4Publisher, NT4PublisherStatus } from "./dataSources/nt4/NT4Publisher
 import NT4Source, { NT4Mode } from "./dataSources/nt4/NT4Source";
 import RLOGServerSource from "./dataSources/rlog/RLOGServerSource";
 import { handleRunsList, rememberRunFolder } from "./runPicker";
-import { maybeApplySimLayout, removeSolversTabs, retryRobotModelCheck, useRobotModel } from "./simLayout";
+import { maybeApplySimLayout, removeSolversTabs, retryRobotModelCheck, syncFieldToLog, useRobotModel } from "./simLayout";
 
 // Constants
 const STATE_SAVE_PERIOD_MS = 250;
@@ -206,6 +206,7 @@ function saveState(): HubState {
 function restoreState(state: HubState) {
   window.sidebar.restoreState(state.sidebar);
   window.tabs.restoreState(state.tabs);
+  syncFieldToLog(); // SolversScope: the sim tabs keep a field that shows the HIVEs until a sim log opens
 }
 
 setInterval(() => {
@@ -324,6 +325,7 @@ function startHistorical(path: string, clear = true, merge = false) {
     window.log = new Log();
     window.sidebar.refresh();
     window.tabs.refresh();
+    syncFieldToLog();
   }
 
   liveSource?.stop();
@@ -639,6 +641,7 @@ async function handleMainMessage(message: NamedMessage) {
         window.assets = message.data;
         window.tabs.newAssets();
         retryRobotModelCheck();
+        syncFieldToLog();
 
         // Alert about failed assets
         if (newHasFailed) {

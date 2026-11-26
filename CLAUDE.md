@@ -113,14 +113,19 @@ SolversScope watches). Per-computer setup:
   AUDIENCE 38-41, BLUE SCORING 42-45; textures come from `www/textures/apriltag-36h11/`). The sim's HIVE bars are separate robot models
   (`Robot_BioBuzzHive*`), so `loadRobot.ts` also passes tag plates through and `RobotManager` calls `applyAprilTagPlate` on them. In cinematic mode only it also puts a
   puzzle-tile texture with thick seams on the floor ("carpet" meshes; seams on 24 in multiples). `OptimizeGeometries.ts` keeps the
-  plates as separate "sign" / "aprilTag_<first id>" meshes. GLTFLoader renames nodes ("am-5883: Panel Sticker" becomes
+  plates as separate "sign" / "aprilTag_<first id>" meshes. Tag plates have the tags only on the face toward the tiles: `mapAprilTagPlate` splits the plate into two draw groups (`groupFacesByFront`), tags on the lower face and plain white on the upper face and rim. GLTFLoader renames nodes ("am-5883: Panel Sticker" becomes
   "am-5883_Panel_Sticker"), so match plates on the original name with `getMeshLabel` (`userData.name`), never on `mesh.name`.
   The sign art is drawn in code as a fallback: replace `makeSignCanvas` with the official artwork when it is available.
+- **HIVEs before a sim log opens:** the sim 3D tabs' own field (`TIPPING_FIELD_ID`, "BioBuzz Sim Field") has no HIVE bars (the log tips them), so with no
+  sim log open it was an empty field. `syncFieldToLog` (simLayout.ts; called from hub `restoreState`, `set-assets` and when the log is cleared) keeps those
+  tabs on the normal FTC field (bars built in) until a sim log is open and the sim field is installed, then on the sim field. The sim field and the
+  `Robot_BioBuzzHive*` models must be in SolversScope's own userAssets folder, not only AdvantageScope's.
 - **FLOWER pickup animation:** `src/hub/flowerAnim.ts` (run from `simLayout.maybeApplySimLayout`, not in plain mode). The robot sim moves a POLLEN from a FLOWER
   into the robot in one tick (`<id> SCORED->HELD pollinator-wedge`) and the balls above drop one slot in that same tick. This replays it as
   motion in a copy of `Field/Pollen` (`/SolversSim/Anim/FlowerPollen`, which the 3D views draw; `defaultPollenKey()` / `usePollenSource` keep
-  them pointed at it): the ball taken rolls out of the FLOWER's bottom along the floor and up into the robot, ending where `Field/HeldPollen`
-  draws it, and the balls above glide down a slot. `Field/Pollen` has no ball ids, so balls are found by position (FLOWER columns from the first
+  them pointed at it): the ball taken starts rolling the moment the wedge touches it (the sim's pickup time, not earlier), out of the FLOWER's
+  bottom along the floor and up into the robot over 0.15 s, ending where `Field/HeldPollen` draws it, and the balls above glide down a slot.
+  `/SolversSim/Anim/FlowerHeld` is the hold with that spot left out until the ball arrives (so it isn't drawn twice). While a roll or glide is in progress the copy is sampled every 5 ms (the log has 20 ms samples), and the roll is one curve that speeds up the whole way like a ball rolling downhill (`rollEase`), about 0.4 s long (it may overlap the next pickup's; the hold spots wait for each arrival, and a roll is cut short only if the robot launches first). `Field/Pollen` has no ball ids, so balls are found by position (FLOWER columns from the first
   frame; the taken ball is the lowest in the column the wedge faces). It only draws; the log's data is untouched.
 - **Drive Sim ammo:** `Intake.ts`: the robot holds at most 4 (G407), a shot uses one, a miss lands on the floor and is picked up by
   driving over it (HUD chip, `/Held` log).

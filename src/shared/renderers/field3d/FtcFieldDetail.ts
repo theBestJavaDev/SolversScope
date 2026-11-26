@@ -392,6 +392,33 @@ export function mapAprilTagPlate(mesh: THREE.Mesh) {
     uv[i * 2 + 1] = (p.dot(up) - minU) / Math.max(1e-6, maxU - minU);
   }
   mesh.geometry.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+  groupFacesByFront(mesh.geometry, normal);
+}
+
+/**
+ * Splits a plate's triangles into two draw groups: group 0 is the face toward `front` (the tiles, which gets the tags)
+ * and group 1 is everything else (the upper face and the rim, plain white). The plate is a thin sheet with a face on each
+ * side, so without this the upper face would show the tags mirrored.
+ */
+function groupFacesByFront(geometry: THREE.BufferGeometry, front: THREE.Vector3) {
+  const index = geometry.getIndex();
+  const normals = geometry.getAttribute("normal");
+  if (index === null || normals === undefined) return;
+  const towardTiles: number[] = [];
+  const others: number[] = [];
+  const face = new THREE.Vector3();
+  const vertex = new THREE.Vector3();
+  for (let i = 0; i + 2 < index.count; i += 3) {
+    face.set(0, 0, 0);
+    for (let k = 0; k < 3; k++) face.add(vertex.fromBufferAttribute(normals, index.getX(i + k)));
+    face.normalize();
+    const target = face.dot(front) > 0.5 ? towardTiles : others;
+    target.push(index.getX(i), index.getX(i + 1), index.getX(i + 2));
+  }
+  geometry.setIndex([...towardTiles, ...others]);
+  geometry.clearGroups();
+  geometry.addGroup(0, towardTiles.length, 0);
+  geometry.addGroup(towardTiles.length, others.length, 1);
 }
 
 /** covariance * v (helper for deflating the principal axis out of a covariance matrix). */
@@ -454,17 +481,17 @@ function mapSign(mesh: THREE.Mesh) {
 type DetailMode = "cinematic" | "standard" | "low-power";
 
 /** Physically based in cinematic mode, the cheap Phong look otherwise (like the rest of the field). */
-function makeDetailMaterial(map: THREE.Texture | null, mode: DetailMode): THREE.Material {
+function makeDetailMaterial(map: THREE.Texture | null, mode: DetailMode, side: THREE.Side = THREE.DoubleSide): THREE.Material {
   return mode === "cinematic"
     ? new THREE.MeshPhysicalMaterial({
         map: map,
-        side: THREE.DoubleSide,
+        side: side,
         roughness: 0.38,
         metalness: 0,
         clearcoat: 0.7,
         clearcoatRoughness: 0.2
       })
-    : new THREE.MeshPhongMaterial({ map: map, side: THREE.DoubleSide, specular: 0x333333, shininess: 40 });
+    : new THREE.MeshPhongMaterial({ map: map, side: side, specular: 0x333333, shininess: 40 });
 }
 
 /** True for the separate tag plate meshes made by OptimizeGeometries ("aprilTag_<first id>"). */
@@ -479,15 +506,17 @@ export function isAprilTagPlate(object: THREE.Object3D): object is THREE.Mesh {
  */
 export function applyAprilTagPlate(mesh: THREE.Mesh, mode: DetailMode = "cinematic", maxAnisotropy = 8) {
   mapAprilTagPlate(mesh);
-  const material = makeDetailMaterial(null, mode);
-  mesh.material = material;
+  // The face toward the tiles carries the tags; the upper face and the rim are plain white (one-sided, so nothing is drawn twice)
+  const tags = makeDetailMaterial(null, mode, THREE.FrontSide);
+  const white = makeDetailMaterial(null, mode, THREE.FrontSide);
+  mesh.material = [tags, white];
   void makeAprilTagPlateCanvas(Number(mesh.name.slice("aprilTag_".length))).then((canvas) => {
     if (canvas === null) return;
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.anisotropy = maxAnisotropy;
-    (material as THREE.MeshPhongMaterial).map = texture;
-    material.needsUpdate = true;
+    (tags as THREE.MeshPhongMaterial).map = texture;
+    tags.needsUpdate = true;
   });
 }
 

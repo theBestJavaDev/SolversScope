@@ -256,6 +256,45 @@ function useTippingField() {
   if (changed) window.tabs.restoreState(state);
 }
 
+/** The newest FTC 3D field that isn't the sim's own (it has the HIVE bars built in), if one is installed. */
+function standardFtcField(): string | undefined {
+  const fields = (window.assets?.field3ds ?? []).filter((field) => field.isFTC && field.id !== TIPPING_FIELD_ID);
+  const year = (id: string) => Number(/(20\d{2})/.exec(id)?.[1] ?? -1);
+  return fields.reduce<(typeof fields)[number] | undefined>(
+    (best, field) => (best === undefined || year(field.id) > year(best.id) ? field : best),
+    undefined
+  )?.id;
+}
+
+/**
+ * Keeps the sim 3D tabs on a field that can show the HIVEs. The sim's own field ("BioBuzz Sim Field") has no HIVE bars,
+ * because the sim draws them from the log's HIVE poses; with no sim log open (the app was just started, or the log was
+ * closed) nothing would draw them, so the field was empty until a sim run opened its log. Without a sim log (or without
+ * the sim field installed) these tabs use the normal FTC field, whose HIVE bars are built in; with a sim log they use
+ * the sim field, where the log tips the bars.
+ */
+export function syncFieldToLog() {
+  if (window.assets === undefined || window.assets === null) return;
+  const hasSimLog = window.log.getFieldKeys().includes(SIM_ROBOT_KEY);
+  if (!hasSimLog) lastHandledLog = null;
+  const simFieldInstalled = window.assets.field3ds.some((field) => field.id === TIPPING_FIELD_ID);
+  const wanted = hasSimLog && simFieldInstalled ? TIPPING_FIELD_ID : standardFtcField();
+  if (wanted === undefined) return;
+  const state = window.tabs.saveState();
+  let changed = false;
+  for (const tab of state.tabs) {
+    if (tab.type !== TabType.Field3d) continue;
+    const controller = tab.controller as { sources?: { logKey: string }[]; game?: string } | null;
+    if (controller === null || !Array.isArray(controller.sources)) continue;
+    if (!controller.sources.some((source) => source.logKey === HIVE_SOURCE_KEY)) continue;
+    if (controller.game !== wanted) {
+      controller.game = wanted;
+      changed = true;
+    }
+  }
+  if (changed) window.tabs.restoreState(state);
+}
+
 /** Puts an Auto Check tab next to the sim views (once), so every sim log gets its shots checked. */
 function addAutoCheckTab() {
   const state = window.tabs.saveState();
