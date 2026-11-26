@@ -64,10 +64,6 @@ export default class Field3dRendererImpl implements TabRenderer {
     [2, -1.5, 4, 0, 1, 0],
     [-2, 1.5, 4, 0, -1, 0]
   ] as const;
-  /** Cinematic shadow map size per spotlight (3 lights render the scene again every frame at this size). */
-  private SHADOW_MAP_SIZE = 2048;
-  /** How many of the cinematic spotlights cast shadows. */
-  private SHADOW_LIGHTS = 3;
   private SPOT_LIGHT_INTENSITY_FRC = 100;
   private SPOT_LIGHT_INTENSITY_FTC = 20;
   private WPILIB_ROTATION = rotationSequenceToQuaternion([
@@ -261,14 +257,13 @@ export default class Field3dRendererImpl implements TabRenderer {
       light.position.set(0, 0, 10);
       this.wpilibCoordinateGroup.add(light);
     } else {
-      this.SPOT_LIGHT_POSITIONS_FRC.forEach(([x, y, z, targetX, targetY, targetZ], index) => {
+      this.SPOT_LIGHT_POSITIONS_FRC.forEach(([x, y, z, targetX, targetY, targetZ]) => {
         const light = new THREE.SpotLight(0xffffff, this.SPOT_LIGHT_INTENSITY_FRC, 0, 50 * (Math.PI / 180), 0.2, 2);
         light.position.set(x, y, z);
         light.target.position.set(targetX, targetY, targetZ);
-        // Each shadow-casting light renders the whole scene again every frame (SHADOW_MAP_SIZE keeps that affordable)
-        light.castShadow = index < this.SHADOW_LIGHTS;
-        light.shadow.mapSize.width = this.SHADOW_MAP_SIZE;
-        light.shadow.mapSize.height = this.SHADOW_MAP_SIZE;
+        light.castShadow = true;
+        light.shadow.mapSize.width = 4096;
+        light.shadow.mapSize.height = 4096;
         light.shadow.bias = -0.00005;
         light.shadow.normalBias = 0.015;
         light.shadow.radius = 3;
