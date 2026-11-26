@@ -5,8 +5,8 @@
   "description": "Robot telemetry application",
   "author": {
     "name": "FTC Team 23511 Seattle Solvers",
-    "email": "software@seattlesolvers.org",
-    "url": "https://seattlesolvers.org"
+    "email": "software@seattlesolvers.com",
+    "url": "https://seattlesolvers.com"
   },
   "license": "BSD-3-Clause",
   "main": "bundles/main.js",

@@ -20,6 +20,16 @@ SolversScope includes the following features & tools:
 - Log statistics analysis
 - Flexible export options, with support for CSV and WPILOG
 
-For questions, feedback, or support regarding SolversScope, contact FTC Team 23511 Seattle Solvers.
+---
+
+## 🛠️ Building & Running on macOS
+
+If you build the app from source on macOS and encounter a "quit unexpectedly" security prompt when launching, run the following command in your terminal to sign the app locally and clear the macOS quarantine attribute:
+
+```bash
+codesign --force --deep --sign - /Applications/SolversScope.app && xattr -cr /Applications/SolversScope.app
+```
+
+For questions, feedback, or support regarding SolversScope, contact FTC Team 23511 Seattle Solvers at **software@seattlesolvers.com**.
 
 ![Example screenshot](/docs/docs/img/screenshot-light.png)
