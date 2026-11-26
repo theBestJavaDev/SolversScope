@@ -195,7 +195,7 @@
     ],
     "mac": {
       "target": "dmg",
-      "icon": "icons/window-icon.png",
+      "icon": "icons/app/app-icon.icns",
       "entitlements": "entitlements.mac.plist",
       "entitlementsInherit": "entitlements.mac.plist",
       "extendInfo": {
