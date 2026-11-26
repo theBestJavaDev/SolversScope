@@ -4125,9 +4125,9 @@ process.on("unhandledRejection", () => {});
 // Set WM_CLASS for Linux
 if (process.platform === "linux") {
   if (DISTRIBUTION === Distribution.WPILib) {
-    app.setName("AdvantageScope (WPILib)");
+    app.setName("SolversScope (WPILib)");
   } else {
-    app.setName("AdvantageScope");
+    app.setName("SolversScope");
   }
 }
 
