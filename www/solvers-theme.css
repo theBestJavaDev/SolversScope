@@ -1578,3 +1578,162 @@ button.runpicker-show:not(:disabled) {
 label.runpicker-row[hidden] {
   display: none;
 }
+
+/* ---------------------------------------------------------------- Multisim (Multi Field tab) */
+/* Run autos…, overlay toggle and the run comparison under the fields (MultiFieldRenderer). */
+
+button.multifield-button.multifield-primary,
+button.multifield-button.multifield-toggle.active {
+  background: var(--ss-accent);
+  color: #0b0a06;
+}
+
+button.multifield-button.multifield-primary:hover:not(:disabled) {
+  background: var(--ss-accent-hover);
+}
+
+div.multisim-with-compare div.multifield-grid {
+  bottom: 36%;
+}
+
+div.multisim-compare {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 36%;
+  overflow: auto;
+  border-top: 1px solid var(--ss-border-strong);
+  background: var(--ss-surface);
+}
+
+div.multisim-compare[hidden] {
+  display: none;
+}
+
+table.multisim-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+table.multisim-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 6px 10px;
+  text-align: left;
+  background: var(--ss-surface-2);
+  border-bottom: 3px solid transparent;
+  font-family: var(--ss-font-display);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+table.multisim-table th:first-child {
+  width: 170px;
+  border-bottom-color: var(--ss-border-strong);
+}
+
+span.multisim-swatch {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 7px;
+  vertical-align: 1px;
+}
+
+table.multisim-table td {
+  padding: 3px 10px;
+  font-family: var(--ss-font-mono);
+  white-space: nowrap;
+  border-bottom: 1px solid var(--ss-border);
+}
+
+table.multisim-table td.multisim-label {
+  font-family: var(--ss-font-body);
+  color: var(--ss-text-dim);
+}
+
+table.multisim-table tr.multisim-group td {
+  padding-top: 9px;
+  font-family: var(--ss-font-display);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ss-accent-ink);
+  border-bottom: 1px solid var(--ss-border-strong);
+}
+
+table.multisim-table td.multisim-better {
+  color: var(--ss-good);
+}
+
+table.multisim-table td.multisim-worse {
+  color: var(--ss-bad);
+}
+
+/* Auto picker (src/hub/autoPicker.ts): reuses the run picker, plus descriptions and a progress view */
+
+span.autopicker-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+span.autopicker-desc {
+  font-size: 11px;
+  color: var(--ss-text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+div.autopicker-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 18px;
+  min-height: 0;
+  flex: 1;
+}
+
+div.autopicker-progress[hidden] {
+  display: none;
+}
+
+div.autopicker-stage {
+  font-weight: 600;
+}
+
+div.autopicker-stage.autopicker-error {
+  color: var(--ss-bad);
+}
+
+pre.autopicker-log {
+  flex: 1;
+  min-height: 160px;
+  max-height: 320px;
+  margin: 0;
+  padding: 8px 10px;
+  overflow: auto;
+  background: var(--ss-surface-2);
+  border: 1px solid var(--ss-border);
+  font-family: var(--ss-font-mono);
+  font-size: 11px;
+  white-space: pre-wrap;
+  user-select: text;
+}
+
+select.autopicker-branch {
+  max-width: 220px;
+  padding: 3px 6px;
+  border: 1px solid var(--ss-accent);
+  background: var(--ss-input);
+  color: var(--ss-text);
+  font-family: var(--ss-font-body);
+  font-size: 12px;
+}
