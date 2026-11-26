@@ -1,0 +1,117 @@
+{
+  "name": "BioBuzz Sim Field",
+  "isFTC": true,
+  "coordinateSystem": "center-rotated",
+  "rotations": [
+    {
+      "axis": "x",
+      "degrees": 90
+    }
+  ],
+  "position": [
+    0,
+    0,
+    0
+  ],
+  "widthInches": 143.182,
+  "heightInches": 143.182,
+  "driverStations": [
+    [
+      2.515,
+      -0.803
+    ],
+    [
+      2.515,
+      0.803
+    ],
+    [
+      -2.515,
+      0.803
+    ],
+    [
+      -2.515,
+      -0.803
+    ]
+  ],
+  "gamePieces": [
+    {
+      "name": "Pollen",
+      "locales": {
+        "en-US": "Pollen",
+        "es-419": "Polen",
+        "fr": "Pollen",
+        "nl": "Pollen",
+        "pt-BR": "P\u00f3len",
+        "ro": "Polen",
+        "tr": "Polen",
+        "ru": "\u041f\u044b\u043b\u044c\u0446\u0430",
+        "kk": "\u0422\u043e\u0437\u0430\u04a3",
+        "he": "\u05d0\u05d1\u05e7\u05d4",
+        "ar": "\u0644\u0642\u0627\u062d",
+        "hi": "\u092a\u0930\u093e\u0917",
+        "zh-CN": "\u82b1\u7c89",
+        "zh-TW": "\u82b1\u7c89"
+      },
+      "rotations": [],
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "stagedObjects": []
+    },
+    {
+      "name": "Nectar (Blue)",
+      "locales": {
+        "en-US": "Nectar (Blue)",
+        "es-419": "N\u00e9ctar (azul)",
+        "fr": "Nectar (bleu)",
+        "nl": "Nectar (blauw)",
+        "pt-BR": "N\u00e9ctar (azul)",
+        "ro": "Nectar (albastru)",
+        "tr": "Nektar (Mavi)",
+        "ru": "\u041d\u0435\u043a\u0442\u0430\u0440 (\u0441\u0438\u043d\u0438\u0439)",
+        "kk": "\u041d\u0435\u043a\u0442\u0430\u0440 (\u043a\u04e9\u043a)",
+        "he": "\u05e6\u05d5\u05e3 (\u05db\u05d7\u05d5\u05dc)",
+        "ar": "\u0631\u062d\u064a\u0642 (\u0623\u0632\u0631\u0642)",
+        "hi": "\u092e\u0915\u0930\u0902\u0926 (\u0928\u0940\u0932\u093e)",
+        "zh-CN": "\u82b1\u871c (\u84dd\u65b9)",
+        "zh-TW": "\u82b1\u871c (\u85cd\u65b9)"
+      },
+      "rotations": [],
+      "position": [
+        0,
+        0.0124968,
+        0
+      ],
+      "stagedObjects": []
+    },
+    {
+      "name": "Nectar (Red)",
+      "locales": {
+        "en-US": "Nectar (Red)",
+        "es-419": "N\u00e9ctar (rojo)",
+        "fr": "Nectar (rouge)",
+        "nl": "Nectar (rood)",
+        "pt-BR": "N\u00e9ctar (vermelho)",
+        "ro": "Nectar (ro\u0219u)",
+        "tr": "Nektar (K\u0131rm\u0131z\u0131)",
+        "ru": "\u041d\u0435\u043a\u0442\u0430\u0440 (\u043a\u0440\u0430\u0441\u043d\u044b\u0439)",
+        "kk": "\u041d\u0435\u043a\u0442\u0430\u0440 (\u049b\u044b\u0437\u044b\u043b)",
+        "he": "\u05e6\u05d5\u05e3 (\u05d0\u05d3\u05d5\u05dd)",
+        "ar": "\u0631\u062d\u064a\u0642 (\u0623\u062d\u0645\u0631)",
+        "hi": "\u092e\u0915\u0930\u0902\u0926 (\u0932\u093e\u0932)",
+        "zh-CN": "\u82b1\u871c (\u7ea2\u65b9)",
+        "zh-TW": "\u82b1\u871c (\u7d05\u65b9)"
+      },
+      "rotations": [],
+      "position": [
+        0,
+        0.0052324,
+        0
+      ],
+      "stagedObjects": []
+    }
+  ],
+  "aprilTags": []
+}
