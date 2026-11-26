@@ -30,6 +30,7 @@ import FTCDashboardSource from "./dataSources/ftcdashboard/FTCDashboardSource";
 import { NT4Publisher, NT4PublisherStatus } from "./dataSources/nt4/NT4Publisher";
 import NT4Source, { NT4Mode } from "./dataSources/nt4/NT4Source";
 import RLOGServerSource from "./dataSources/rlog/RLOGServerSource";
+import { handleSimAutosDone, handleSimAutosList, handleSimAutosProgress } from "./autoPicker";
 import { handleRunsList, rememberRunFolder } from "./runPicker";
 import { maybeApplySimLayout, removeSolversTabs, retryRobotModelCheck, syncFieldToLog, useRobotModel } from "./simLayout";
 
@@ -809,6 +810,19 @@ async function handleMainMessage(message: NamedMessage) {
     case "runs-list":
       // SolversScope Multi Field run picker: the runs in a folder (src/hub/runPicker.ts)
       handleRunsList(message.data);
+      break;
+
+    case "sim-autos-list":
+      // SolversScope Multisim auto picker (src/hub/autoPicker.ts)
+      handleSimAutosList(message.data);
+      break;
+
+    case "sim-autos-progress":
+      handleSimAutosProgress(message.data);
+      break;
+
+    case "sim-autos-done":
+      handleSimAutosDone(message.data);
       break;
 
     case "load-runs-into-tab":

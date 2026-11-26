@@ -85,9 +85,33 @@ shot.
 Use this to answer "which auto is better?", for example a 2-tip auto next to a 3-tip auto, or red next to blue. Up to
 **three** runs play **in one window, at the same time**, lined up so their autos start together.
 
-**Easiest way (just tick boxes):**
+**Run autos and compare them (Multisim):**
 
-1. Add a **Multi Field** tab: click **+** at the top right → Multi Field.
+1. Add a **Multisim** tab: click **+** at the top right → Multisim.
+2. Press **▶ Run autos…**. It lists the autos in your robot code (the ones in `RunAutos.java`).
+   **Robot code** at the top picks which code runs: **Your checkout** (the robot project as it is on your
+   computer, unsaved changes included) or any **branch** (as committed, e.g. `v1.5`). Branches run from a copy inside
+   the project's `build` folder, so your own checkout is never changed. Ticking an auto picks it from the branch
+   shown, so you can tick AutoMax, switch to another branch and tick AutoMax again to compare the two versions.
+3. **Tick** up to three and press **Run**. The robot code sim runs each one (the first time also builds the code, so
+   it can take a minute or two; **Cancel** stops it). When they finish, they play side by side from the auto's START.
+4. **Overlay** puts every robot on one field: run A as itself, the others as see-through robots in their color, so
+   you can see exactly where the paths split. Press it again to go back to side by side.
+5. The **Compare** panel under the fields shows each run's numbers in its color (A gold, B blue, C pink):
+   - **Scoring:** shots, scored, missed, hit rate, HIVE tips.
+   - **Timing:** first and last shot and the last leg change (seconds after START), and time spent stopped.
+   - **Driving:** path length, top speed, average speed while moving (during the 30 s auto).
+   - **Now:** each robot's leg, speed and scored / shots at the playhead, and how far B and C are from A.
+
+   B and C also show their difference from A, e.g. `(+2)`: green when it's better, red when it's worse. Press
+   **Compare** to hide or show the panel.
+
+Multisim uses the robot project whose runs you last opened. If it can't find it, open one run from that project with
+**Choose runs… → Change folder…** (its `TeamCode\build\sim` folder) once.
+
+**Runs you already have (just tick boxes):**
+
+1. Add a **Multisim** tab: click **+** at the top right → Multisim.
 2. Press **Choose runs…**. A list of your runs opens, newest first. Type in the search box to find one.
 3. **Tick** up to three runs and press **Show**. The tab shows exactly the runs you ticked, one field each.
 

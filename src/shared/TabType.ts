@@ -106,7 +106,7 @@ export function getDefaultTabTitle(type: TabType): string {
     case TabType.AutoCheck:
       return "Auto Check";
     case TabType.MultiField:
-      return "Multi Field";
+      return "Multisim";
     default:
       return "";
   }

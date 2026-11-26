@@ -21,7 +21,8 @@ type RunsList = { folder: string | null; runs: RunFile[] };
 let request: { uuid: string; pane: number } | null = null;
 let dialog: HTMLElement | null = null;
 
-function storedFolder(): string | null {
+/** The runs folder last used (also tells Multisim's auto picker which robot project to use). */
+export function storedFolder(): string | null {
   try {
     return window.localStorage.getItem(FOLDER_KEY);
   } catch {

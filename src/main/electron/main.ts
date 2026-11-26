@@ -94,6 +94,15 @@ import { getOwletDownloadStatus, startOwletDownloadLoop } from "./owletDownloadL
 import { checkHootIsPro, convertHoot, CTRE_LICENSE_URL } from "./owletInterface";
 import { promptRobotCad } from "./robotCad";
 import { listRuns } from "./runsFolder";
+import {
+  SimAuto,
+  SimAutoPick,
+  SimAutosList,
+  cancelSimAutos,
+  isRunningSimAutos,
+  listSimAutos,
+  runSimAutos
+} from "./simAutos";
 
 // Dynamically load lzma-native to handle platforms without prebuilt binaries
 let lzma: typeof import("lzma-native") | null = null;
@@ -1414,6 +1423,56 @@ async function handleHubMessage(window: BrowserWindow, message: NamedMessage) {
 
     case "list-runs":
       sendMessage(window, "runs-list", listRuns(message.data?.folder ?? null));
+      break;
+
+    case "list-sim-autos":
+      // SolversScope Multisim: the robot code's autos (RunAutos.java) for the auto picker (src/hub/autoPicker.ts)
+      sendMessage(
+        window,
+        "sim-autos-list",
+        listSimAutos(message.data?.folder ?? null, typeof message.data?.branch === "string" ? message.data.branch : "")
+      );
+      break;
+
+    case "run-sim-autos": {
+      // SolversScope Multisim: run the ticked autos (each from its branch) in the robot sim, then show
+      // their runs side by side
+      if (isRunningSimAutos()) break;
+      const asked: SimAutoPick[] = (message.data.picks ?? []).slice(0, 3);
+      const lists = new Map<string, SimAutosList>();
+      const listFor = (branch: string) => {
+        if (!lists.has(branch)) lists.set(branch, listSimAutos(message.data.folder ?? null, branch));
+        return lists.get(branch)!;
+      };
+      const picks = asked
+        .map((pick) => ({ auto: listFor(pick.branch).autos.find((auto) => auto.method === pick.method), branch: pick.branch }))
+        .filter((pick): pick is { auto: SimAuto; branch: string } => pick.auto !== undefined);
+      const repo = listFor("").repo;
+      if (repo === null || picks.length === 0) {
+        sendMessage(window, "sim-autos-done", {
+          files: [],
+          failed: asked.map((pick) => pick.method),
+          cancelled: false,
+          exitCode: null
+        });
+        break;
+      }
+      runSimAutos(
+        repo,
+        picks,
+        (line) => sendMessage(window, "sim-autos-progress", line),
+        (result) => {
+          sendMessage(window, "sim-autos-done", result);
+          if (!result.cancelled && result.files.length > 0) {
+            deliverChosenRuns(window, result.files, message.data.uuid, 0);
+          }
+        }
+      );
+      break;
+    }
+
+    case "cancel-sim-autos":
+      cancelSimAutos();
       break;
 
     case "browse-runs-folder":
