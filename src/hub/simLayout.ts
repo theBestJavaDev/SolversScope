@@ -323,6 +323,29 @@ function startTime(): number {
   return range[0];
 }
 
+/** Where a test build of SolversScope pointed the sim views (a random match "world" this version doesn't write). */
+const OLD_MATCH_WORLD_PREFIX = "/SolversSim/AutoCheck/Match/World/";
+
+/**
+ * Points sim view sources saved by that build (HIVEs, POLLEN, NECTAR under OLD_MATCH_WORLD_PREFIX) back at the
+ * logged tracks; nothing writes those keys any more, so the HIVEs and pieces would never show.
+ */
+function restoreLoggedSources() {
+  const state = window.tabs.saveState();
+  let changed = false;
+  for (const tab of state.tabs) {
+    const controller = tab.controller as { sources?: { logKey: string }[] } | null;
+    if (controller === null || !Array.isArray(controller.sources)) continue;
+    for (const source of controller.sources) {
+      if (source.logKey.startsWith(OLD_MATCH_WORLD_PREFIX)) {
+        source.logKey = "RealOutputs/Field/" + source.logKey.slice(OLD_MATCH_WORLD_PREFIX.length);
+        changed = true;
+      }
+    }
+  }
+  if (changed) window.tabs.restoreState(state);
+}
+
 /**
  * Called when a log finishes its initial decode. Applies the sim layout if this is a BioBuzz sim
  * log and nothing is set up to show it, then plays from START.
@@ -333,6 +356,7 @@ export async function maybeApplySimLayout(logName: string): Promise<void> {
   if (logName === lastHandledLog) return;
   if (!window.log.getFieldKeys().includes(SIM_ROBOT_KEY)) return;
   lastHandledLog = logName;
+  restoreLoggedSources();
 
   const current = window.tabs.saveState();
   const fieldTabs = current.tabs.filter((tab) => tab.type === TabType.Field2d || tab.type === TabType.Field3d);
