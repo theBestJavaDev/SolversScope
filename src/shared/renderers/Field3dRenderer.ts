@@ -168,6 +168,8 @@ export type Field3dRendererCommand_GamePieceObj = {
   poses: AnnotatedPose3d[];
   /** Log time (s) these poses are from; lets balls tell free flight from rolling. */
   time?: number | null;
+  /** True when slot i of the list is always the same piece (a "...ById" log key). Used by cinematic replay. */
+  stableIds?: boolean;
 };
 
 export type Field3dRendererCommand_TrajectoryObj = {

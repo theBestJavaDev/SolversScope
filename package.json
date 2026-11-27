@@ -13,6 +13,7 @@
   "scripts": {
     "start": "electron bundles/main.js",
     "compile": "rolldown -c",
+    "test:cinematic": "rolldown test/cinematic/replayTests.ts --file bundles/test-cinematic.mjs --format esm --platform node --log-level warn && node bundles/test-cinematic.mjs",
     "test:sim": "rolldown test/sim/simTests.ts --file bundles/test-sim.mjs --format esm --platform node --log-level warn && node bundles/test-sim.mjs",
     "build": "npm run compile && npm run wasm:compile && npm run docs:build-embed && electron-builder build",
     "build-linux": "npm run compile && npm run wasm:compile && npm run docs:build-embed && electron-builder build -c.electronVersion=37.10.3",

@@ -273,9 +273,15 @@ export default class Field3dController implements TabController {
     return true;
   }
 
-  getCommand(): Field3dRendererCommand {
+  /** Log keys of every displayed source (and its children), for building a cinematic replay. */
+  getReplayKeys(): string[] {
+    return this.sourceList.getState(true).map((source) => source.logKey);
+  }
+
+  /** Builds the render command. `timeOverride` is for cinematic replay, which supplies its own clock. */
+  getCommand(timeOverride?: number): Field3dRendererCommand {
     // Get timestamp
-    let time = window.selection.getRenderTime();
+    let time = timeOverride !== undefined ? timeOverride : window.selection.getRenderTime();
 
     // Get field data
     let fieldData = [...(window.assets === null ? [] : window.assets.field3ds), ...BuiltIn3dFields].find(
@@ -484,7 +490,8 @@ export default class Field3dController implements TabController {
             type: "gamePiece",
             variant: source.options.variant,
             poses: poses,
-            time: time
+            time: time,
+            stableIds: source.logKey.endsWith("ById")
           });
           break;
         case "trajectory":
