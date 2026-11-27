@@ -173,5 +173,5 @@ const times50 = Array.from({ length: 101 }, (_, i) => i * 0.02);
   check("sample(t) is a pure function of t", a === b);
 }
 
-console.log(failures === 0 ? "\nAll checks passed" : `\n${failures} check(s) failed`);
-process.exit(failures === 0 ? 0 : 1);
+console.log(failures === 0 ? "\nAll replay checks passed" : `\n${failures} replay check(s) failed`);
+if (failures !== 0) process.exit(1);
