@@ -621,6 +621,7 @@ async function handleMainMessage(message: NamedMessage) {
     case "cin-scene":
     case "cin-sample":
     case "cin-preset":
+    case "cin-record":
     case "cin-live-look":
       handleCinematicMessage(message.name, message.data);
       break;

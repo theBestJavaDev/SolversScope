@@ -22,6 +22,7 @@ import { ReplaySource } from "../../shared/cinematic/ReplaySource";
 import { SubTime } from "../../shared/cinematic/Timing";
 import Field3dRenderer from "../../shared/renderers/Field3dRenderer";
 import Field3dController from "../controllers/Field3dController";
+import { recorder } from "./Recorder";
 import { makeRlogReplaySource } from "./RlogReplaySource";
 
 class CinematicError extends Error {
@@ -181,6 +182,26 @@ function preset(data: { preset: PresetName; params: PresetParams }) {
   }
 }
 
+function record(data: { action: "start" | "stop" | "status" }) {
+  if (window.log.getFieldCount() === 0) throw new CinematicError("no_replay", "No log or live data is open, so there is nothing to record.");
+  const before = recorder.get();
+  if (data.action === "start") {
+    if (before.recording) throw new CinematicError("already_recording", "Already recording. Call record_stop first.");
+    recorder.start();
+  } else if (data.action === "stop") {
+    if (!before.recording) throw new CinematicError("not_recording", "Not recording. Call record_start first.");
+    recorder.stop();
+  }
+  const state = recorder.get();
+  return {
+    recording: state.recording,
+    start: state.start,
+    end: state.end,
+    duration: state.start !== null && state.end !== null ? state.end - state.start : null,
+    live: window.selection.getCurrentLiveTime() !== null
+  };
+}
+
 function liveLook(data: { shot: Shot; t: number }) {
   const { replay, controller } = getSession();
   checkTime(replay, data.t);
@@ -215,6 +236,8 @@ export function handleCinematicMessage(name: string, data: any) {
         return reply({ ok: true, result: scene(data) });
       case "cin-sample":
         return reply({ ok: true, result: sample(data) });
+      case "cin-record":
+        return reply({ ok: true, result: record(data) });
       case "cin-preset":
         return reply({ ok: true, result: preset(data) });
       case "cin-live-look":

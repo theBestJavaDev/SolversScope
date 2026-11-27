@@ -5,6 +5,7 @@
 // license that can be found in the LICENSE file
 // at the root directory of this project.
 
+import { recorder } from "../cinematic/Recorder";
 import LoggableType from "../../shared/log/LoggableType";
 import { SHOT_LAB_LOG_PREFIX } from "../../shared/physics/ShotLab";
 import { TelemetryMetric, TelemetryRendererCommand } from "../../shared/renderers/TelemetryRenderer";
@@ -95,16 +96,14 @@ export default class TelemetryController implements TabController {
   }
 
   private toggleRecord() {
-    if (this.record.recording) {
-      this.record.end = this.now();
-      this.record.recording = false;
-    } else {
-      this.record = { start: this.now(), end: null, recording: true };
-    }
+    // Shared with the cinematic command server (record_start / record_stop)
+    if (this.record.recording) recorder.stop();
+    else recorder.start();
     this.updateRecordUi();
   }
 
   private updateRecordUi() {
+    this.record = recorder.get();
     const r = this.record;
     this.RECORD.innerText = r.recording ? "■ Stop" : "● Record";
     this.RECORD.classList.toggle("recording", r.recording);

@@ -79,6 +79,7 @@ import { VideoProcessor } from "./VideoProcessor";
 import { XRControls } from "./XRControls";
 import { XRServer } from "./XRServer";
 import { CinematicMain } from "./cinematicMain";
+import { CinematicServer } from "./cinematicServer";
 import { getAssetDownloadStatus, startAssetDownloadLoop } from "./assetDownloader";
 import { createAssetFolders, getUserAssetsPath, loadAssets } from "./assetLoader";
 import {
@@ -4147,6 +4148,8 @@ app.whenReady().then(async () => {
     getBattery: () => powerMonitor.isOnBatteryPower(),
     windowIcon: WINDOW_ICON
   });
+  const cinematicPort = CinematicServer.requestedPort(process.argv, process.env);
+  if (cinematicPort !== null) CinematicServer.start(cinematicPort); // Off by default: nothing listens unless asked
   if (process.env.SOLVERS_CINEMATIC_SELFTEST) {
     // Developer harness: see CinematicMain.runSelfTest
     setTimeout(() => {

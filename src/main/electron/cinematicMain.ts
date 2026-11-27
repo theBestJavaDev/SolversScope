@@ -152,6 +152,29 @@ export namespace CinematicMain {
     });
   }
 
+  /** Opens a log in the hub window and waits until its 3D field tab can be sampled. Returns the scene summary. */
+  export async function openReplay(file: string) {
+    const hub = deps.getHubWindow();
+    if (hub === null) throw new CinematicError("no_hub", "No SolversScope window is open.");
+    deps.sendToHub(hub, "open-files", { files: [file], merge: false });
+    await new Promise((r) => setTimeout(r, 1000));
+    let last = "";
+    let stable = 0;
+    for (let attempt = 0; attempt < 120; attempt++) {
+      try {
+        const scene = await hubCall("cin-scene", {}, 5000);
+        const signature = `${scene.startTime}:${scene.endTime}:${scene.entities.length}`;
+        stable = signature === last ? stable + 1 : 0;
+        last = signature;
+        if (stable >= 2) return scene;
+      } catch {
+        stable = 0;
+      }
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    throw new CinematicError("load_timeout", `Timed out waiting for ${path.basename(file)} to load with a 3D Field tab`);
+  }
+
   // ---------- render window ----------
 
   /** Forwards a message (assets, preferences, battery) to the render window if it exists. */
