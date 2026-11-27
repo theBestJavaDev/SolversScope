@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "solverscope": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "tools/solverscope-mcp/dist/index.js"
+      ],
+      "env": {}
+    }
+  }
+}

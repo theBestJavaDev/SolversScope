@@ -151,7 +151,7 @@ function sample(data: { shot: Shot; items: { t: number; subs: SubTime[] }[] }) {
   return data.items.map((item) => ({
     t: item.t,
     subframes: item.subs.map((sub) => {
-      checkTime(replay, sub.t, "subframe t");
+      checkTime(replay, sub.t, item.subs.length > 1 ? "subframe t" : "t");
       let camera: CameraState;
       try {
         camera = evaluator.stateAt(sub.t);
