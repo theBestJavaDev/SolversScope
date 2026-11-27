@@ -78,6 +78,7 @@ import UpdateChecker from "./UpdateChecker";
 import { VideoProcessor } from "./VideoProcessor";
 import { XRControls } from "./XRControls";
 import { XRServer } from "./XRServer";
+import { CinematicMain } from "./cinematicMain";
 import { getAssetDownloadStatus, startAssetDownloadLoop } from "./assetDownloader";
 import { createAssetFolders, getUserAssetsPath, loadAssets } from "./assetLoader";
 import {
@@ -172,6 +173,7 @@ function sendMessage(window: BrowserWindow, name: string, data?: any): boolean {
 function sendAllPreferences() {
   let data: Preferences = jsonfile.readFileSync(PREFS_FILENAME);
   nativeTheme.themeSource = solversThemeSource(data.theme);
+  CinematicMain.broadcast("set-preferences", data);
   hubWindows.forEach((window) => {
     if (!window.isDestroyed()) {
       sendMessage(window, "set-preferences", data);
@@ -212,6 +214,7 @@ function sendAllPreferences() {
 
 /** Sends the current set of assets to all windows. */
 function sendAssets() {
+  CinematicMain.broadcast("set-assets", advantageScopeAssets);
   Object.values(satelliteWindows).forEach((windowCollection) => {
     windowCollection.forEach((window) => {
       if (!window.isDestroyed()) {
@@ -257,6 +260,10 @@ async function handleHubMessage(window: BrowserWindow, message: NamedMessage) {
   switch (message.name) {
     case "show":
       window.show();
+      break;
+
+    case "cin-response":
+      CinematicMain.onHubResponse(message.data);
       break;
 
     case "alert":
@@ -4132,6 +4139,22 @@ if (process.platform === "linux") {
 }
 
 app.whenReady().then(async () => {
+  CinematicMain.configure({
+    getHubWindow: () => hubWindows.find((w) => !w.isDestroyed()) ?? null,
+    sendToHub: (window, name, data) => sendMessage(window, name, data),
+    getAssets: () => advantageScopeAssets,
+    getPreferences: () => jsonfile.readFileSync(PREFS_FILENAME),
+    getBattery: () => powerMonitor.isOnBatteryPower(),
+    windowIcon: WINDOW_ICON
+  });
+  if (process.env.SOLVERS_CINEMATIC_SELFTEST) {
+    // Developer harness: see CinematicMain.runSelfTest
+    setTimeout(() => {
+      CinematicMain.runSelfTest(process.env.SOLVERS_CINEMATIC_SELFTEST!)
+        .catch((error) => console.error("[cinematic-selftest] failed", error))
+        .finally(() => app.quit());
+    }, 3000);
+  }
   // Check preferences and set theme
   let prefs = DEFAULT_PREFS;
   if (process.platform === "linux") {

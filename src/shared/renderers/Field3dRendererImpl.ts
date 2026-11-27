@@ -119,6 +119,8 @@ export default class Field3dRendererImpl implements TabRenderer {
   }[] = [];
 
   private shouldRender = false;
+  /** Cinematic offline rendering (shared/cinematic/OfflinePipeline.ts). Null in normal use; nothing below changes then. */
+  cinematic: CinematicHook | null = null;
   private cameraIndex: CameraIndex = CameraIndexEnum.OrbitField;
   private orbitFov = 50;
   private primaryRobotModel = "";
@@ -539,7 +541,7 @@ export default class Field3dRendererImpl implements TabRenderer {
 
   render(command: Field3dRendererCommand): void {
     // Update controls
-    let delta = this.clock.getDelta();
+    let delta = this.cinematic !== null ? 0 : this.clock.getDelta();
     let controlsUpdated = false;
     if (this.keysPressed.has("KeyW")) {
       if (this.controls.distance <= this.controls.minDistance) {
@@ -634,8 +636,8 @@ export default class Field3dRendererImpl implements TabRenderer {
       this.shouldRender = true;
     }
 
-    // Exit if not visible
-    if (this.canvas.getBoundingClientRect().width === 0) {
+    // Exit if not visible (offline rendering has no layout)
+    if (this.cinematic === null && this.canvas.getBoundingClientRect().width === 0) {
       return; // Continue trying to render
     }
 
@@ -657,6 +659,7 @@ export default class Field3dRendererImpl implements TabRenderer {
     this.lastCoordinateSystem = command.coordinateSystem;
 
     // Check if rendering should continue
+    if (this.cinematic !== null) this.shouldRender = true;
     if (!this.shouldRender) {
       return;
     }
@@ -918,8 +921,9 @@ export default class Field3dRendererImpl implements TabRenderer {
 
       // Update camera controls
       let orbitalCamera =
-        this.cameraIndex === CameraIndexEnum.OrbitField || this.cameraIndex === CameraIndexEnum.OrbitRobot;
-      let dsCamera = this.cameraIndex < CameraIndexEnum.OrbitRobot;
+        this.cinematic === null &&
+        (this.cameraIndex === CameraIndexEnum.OrbitField || this.cameraIndex === CameraIndexEnum.OrbitRobot);
+      let dsCamera = this.cinematic === null && this.cameraIndex < CameraIndexEnum.OrbitRobot;
       if (orbitalCamera !== this.controls.enabled) {
         this.controls.enabled = orbitalCamera;
       }
@@ -927,7 +931,15 @@ export default class Field3dRendererImpl implements TabRenderer {
       // Update container and camera based on mode
       let fov = this.orbitFov;
       this.aspectRatio = null;
-      if (orbitalCamera || dsCamera) {
+      if (this.cinematic !== null) {
+        // Cinematic: the camera is the command's cameraOverride (a pose in the log's frame), fixed size and vertical fov
+        this.aspectRatio = this.cinematic.width / this.cinematic.height;
+        fov = this.cinematic.fov;
+        if (this.fixedCameraOverrideObj.visible) {
+          this.camera.position.copy(this.fixedCameraOverrideObj.getWorldPosition(new THREE.Vector3()));
+          this.camera.quaternion.copy(this.fixedCameraOverrideObj.getWorldQuaternion(new THREE.Quaternion()));
+        }
+      } else if (orbitalCamera || dsCamera) {
         this.canvas.classList.remove("fixed");
         this.canvasContainer.classList.remove("fixed");
         this.canvas.style.width = "";
@@ -1054,9 +1066,9 @@ export default class Field3dRendererImpl implements TabRenderer {
     }
 
     // Render new frame
-    const devicePixelRatio = window.devicePixelRatio * (this.mode === "low-power" ? 0.75 : 1);
-    const clientWidth = this.canvas.clientWidth;
-    const clientHeight = this.canvas.clientHeight;
+    const devicePixelRatio = this.cinematic !== null ? 1 : window.devicePixelRatio * (this.mode === "low-power" ? 0.75 : 1);
+    const clientWidth = this.cinematic !== null ? this.cinematic.width : this.canvas.clientWidth;
+    const clientHeight = this.cinematic !== null ? this.cinematic.height : this.canvas.clientHeight;
     if (
       this.canvas.width / devicePixelRatio !== clientWidth ||
       this.canvas.height / devicePixelRatio !== clientHeight
@@ -1076,9 +1088,78 @@ export default class Field3dRendererImpl implements TabRenderer {
     }
     this.arena.update(background, themeColor("--ss-accent", "#f2ce00"), isDark);
     this.renderer.setPixelRatio(devicePixelRatio);
-    this.renderer.render(this.scene, this.camera);
+    if (this.cinematic !== null) {
+      this.cinematic.draw(this.renderer, this.scene, this.camera);
+    } else {
+      this.renderer.render(this.scene, this.camera);
+    }
+  }
+
+  /** True when no field, robot model or field asset is still loading (offline rendering waits for this). */
+  isIdle(): boolean {
+    return this.robotLoadingCount === 0 && !this.isFieldLoading && !this.shouldLoadNewField;
+  }
+
+  /** Where the primary robot is drawn (diagnostics for comparing views). */
+  debugPrimaryRobot() {
+    return {
+      visible: this.primaryRobotGroup.visible,
+      local: this.primaryRobotGroup.position.toArray(),
+      world: this.primaryRobotGroup.getWorldPosition(new THREE.Vector3()).toArray(),
+      mode: this.mode
+    };
+  }
+
+  /** The arena backdrop dome, which the offline pipeline draws as its own layer (it is not tone mapped). */
+  getArenaDome(): THREE.Mesh {
+    return this.arena.dome;
+  }
+
+  /**
+   * Points the live orbit camera at the same view as a cinematic camera (pose in the log's frame, +X forward).
+   * Used to compare the offline renderer against the live view.
+   */
+  lookThroughCinematicPose(position: [number, number, number], rotation: [number, number, number, number], fov: number) {
+    // Orbit Field puts the scene group at the origin; "Orbit Robot" shifts it to put the robot there. Switch first,
+    // so the world coordinates computed below are the ones the camera will actually be in.
+    this.set3DCamera(CameraIndexEnum.OrbitField);
+    this.wpilibCoordinateGroup.position.set(0, 0, 0);
+    this.wpilibCoordinateGroup.rotation.setFromQuaternion(this.WPILIB_ROTATION);
+    this.wpilibCoordinateGroup.updateMatrixWorld(true);
+    const probe = new THREE.Object3D();
+    this.wpilibFieldCoordinateGroup.add(probe);
+    probe.position.set(...position);
+    probe.quaternion.copy(rotation3dToQuaternion(rotation));
+    const eye = probe.getWorldPosition(new THREE.Vector3());
+    const forward = new THREE.Vector3(1, 0, 0).applyQuaternion(probe.getWorldQuaternion(new THREE.Quaternion()));
+    this.wpilibFieldCoordinateGroup.remove(probe);
+    const target = eye.clone().add(forward.multiplyScalar(2));
+    this.controls.setLookAt(eye.x, eye.y, eye.z, target.x, target.y, target.z, false);
+    this.controls.update(0);
+    this.setFov(fov);
+    this.lastCameraIndex = this.cameraIndex; // Don't let a camera reset undo this
+    this.shouldRender = true;
+    return {
+      requestedEye: eye.toArray(),
+      requestedTarget: target.toArray(),
+      renderedCameraBeforeThisCall: this.camera.position.toArray(),
+      renderedFov: this.camera.fov,
+      renderedAspect: this.camera.aspect,
+      groupPosition: this.wpilibCoordinateGroup.position.toArray(),
+      eye: this.controls.getPosition(new THREE.Vector3()).toArray(),
+      target: this.controls.getTarget(new THREE.Vector3()).toArray()
+    };
   }
 }
+
+/** Hook for offline rendering: fixed output size, vertical fov, and a custom draw instead of renderer.render. */
+export type CinematicHook = {
+  width: number;
+  height: number;
+  /** Vertical field of view (degrees). */
+  fov: number;
+  draw: (renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.PerspectiveCamera) => void;
+};
 
 type CameraIndex = number | CameraIndexEnum;
 enum CameraIndexEnum {

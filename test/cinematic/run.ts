@@ -7,3 +7,4 @@
 
 import "./replayTests";
 import "./cameraTests";
+import "./timingTests";

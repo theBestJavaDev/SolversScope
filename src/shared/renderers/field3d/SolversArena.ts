@@ -19,6 +19,8 @@ import * as THREE from "three";
  */
 export default class SolversArena {
   readonly group = new THREE.Group();
+  /** The backdrop dome (own material, not tone mapped). */
+  readonly dome: THREE.Mesh;
   private domeMaterial: THREE.ShaderMaterial;
   private floorMaterial: THREE.MeshBasicMaterial;
   private floorTexture: THREE.CanvasTexture;
@@ -63,6 +65,7 @@ export default class SolversArena {
     const dome = new THREE.Mesh(new THREE.SphereGeometry(400, 48, 24), this.domeMaterial);
     dome.renderOrder = -1000;
     dome.frustumCulled = false;
+    this.dome = dome;
     this.group.add(dome);
 
     // Floor: radial "pool of light" texture

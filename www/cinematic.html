@@ -1,0 +1,32 @@
+<!--
+  Copyright (c) 2021-2026 Littleton Robotics & FTC Team 23511 Seattle Solvers
+  http://github.com/Mechanical-Advantage
+
+  Use of this source code is governed by a BSD
+  license that can be found in the LICENSE file
+  at the root directory of this project.
+-->
+
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src file: blob:"
+    />
+    <link rel="stylesheet" href="global.css" />
+    <link rel="stylesheet" href="solvers-theme.css" />
+    <script type="module" src="../bundles/cinematic.js"></script>
+    <title>SolversScope Cinematic Renderer</title>
+  </head>
+
+  <body style="margin: 0; overflow: hidden">
+    <!-- Hidden offline render surface (see src/cinematic.ts). Its size is set by the render job, not by this window. -->
+    <div id="cinematic-container" style="position: fixed; left: 0; top: 0">
+      <canvas id="cinematic-canvas" class="field-3d-canvas"></canvas>
+    </div>
+    <div id="cinematic-alert" hidden></div>
+    <div id="cinematic-spinner"></div>
+  </body>
+</html>

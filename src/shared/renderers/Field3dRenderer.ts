@@ -49,6 +49,15 @@ export default class Field3dRenderer implements TabRenderer {
     this.implementation?.set3DCamera(index);
   }
 
+  /** Moves the live orbit camera to a cinematic pose (log frame, +X forward). For comparing against offline renders. */
+  lookThroughCinematicPose(position: [number, number, number], rotation: [number, number, number, number], fov: number) {
+    return this.implementation?.lookThroughCinematicPose(position, rotation, fov);
+  }
+
+  debugPrimaryRobot() {
+    return this.implementation?.debugPrimaryRobot();
+  }
+
   /** Updates the orbit FOV. */
   setFov(fov: number) {
     this.implementation?.setFov(fov);

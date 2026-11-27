@@ -128,7 +128,7 @@ export default (cliArgs) => {
     bundle(
       [
         "hub/hub.ts",
-        ...(!isLite ? ["satellite.ts"] : []),
+        ...(!isLite ? ["satellite.ts", "cinematic.ts"] : []),
 
         "editRange.ts",
         "unitConversion.ts",

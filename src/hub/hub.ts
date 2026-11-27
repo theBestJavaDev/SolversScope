@@ -30,6 +30,7 @@ import FTCDashboardSource from "./dataSources/ftcdashboard/FTCDashboardSource";
 import { NT4Publisher, NT4PublisherStatus } from "./dataSources/nt4/NT4Publisher";
 import NT4Source, { NT4Mode } from "./dataSources/nt4/NT4Source";
 import RLOGServerSource from "./dataSources/rlog/RLOGServerSource";
+import { handleCinematicMessage } from "./cinematic/CinematicHub";
 import { handleSimAutosDone, handleSimAutosList, handleSimAutosProgress } from "./autoPicker";
 import { handleRunsList, rememberRunFolder } from "./runPicker";
 import { maybeApplySimLayout, removeSolversTabs, retryRobotModelCheck, syncFieldToLog, useRobotModel } from "./simLayout";
@@ -614,6 +615,14 @@ async function handleMainMessage(message: NamedMessage) {
 
     case "set-battery":
       window.isBattery = message.data;
+      break;
+
+    // Cinematic tools (src/hub/cinematic): only sent when the main process runs a cinematic job
+    case "cin-scene":
+    case "cin-sample":
+    case "cin-preset":
+    case "cin-live-look":
+      handleCinematicMessage(message.name, message.data);
       break;
 
     case "set-version":

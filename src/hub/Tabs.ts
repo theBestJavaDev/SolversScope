@@ -699,6 +699,18 @@ export default class Tabs {
   }
 
   /** Returns the index of the selected tab. */
+  /** Controllers of all open tabs of a type, the selected tab's first (used by the cinematic tools). */
+  findControllers(type: TabType): TabController[] {
+    const matches = this.tabList.map((tab, index) => ({ tab, index })).filter((entry) => entry.tab.type === type);
+    matches.sort((a, b) => Number(b.index === this.selectedTab) - Number(a.index === this.selectedTab));
+    return matches.map((entry) => entry.tab.controller);
+  }
+
+  /** The renderer paired with a controller (used by the cinematic tools). */
+  findRenderer(controller: TabController): TabRenderer | null {
+    return this.tabList.find((tab) => tab.controller === controller)?.renderer ?? null;
+  }
+
   getSelectedTab(): number {
     return this.selectedTab;
   }

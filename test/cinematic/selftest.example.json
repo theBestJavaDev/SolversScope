@@ -1,0 +1,11 @@
+{
+  "_comment": "Run with: SOLVERS_CINEMATIC_SELFTEST=<this file> SOLVERS_RENDERS_DIR=<dir> [SOLVERS_FFMPEG=<path>] npx electron bundles/main.js <log.rlog>. Steps: scene, preview, compare (live view vs offline), hashes (determinism), preview-vs-render, clip. Shots come from \"preset\" + \"params\" or an explicit \"shot\".",
+  "steps": [
+    { "op": "scene", "out": "scene.json" },
+    { "op": "preview", "preset": "orbit_robot", "params": { "target": "robot.0", "start": 8 }, "t": 10, "width": 960, "height": 540, "out": "orbit.png" },
+    { "op": "compare", "preset": "orbit_robot", "params": { "target": "robot.0", "start": 8 }, "t": 10, "scale": 2, "outLive": "live.png", "outPreview": "offline.png" },
+    { "op": "hashes", "preset": "follow_chase", "params": { "target": "robot.0", "start": 8 }, "start": 8, "end": 8.8, "fps": 30, "width": 640, "height": 360, "motionBlurSamples": 4 },
+    { "op": "preview-vs-render", "preset": "follow_chase", "params": { "target": "robot.0", "start": 8 }, "start": 8, "end": 8.8, "frame": 17, "fps": 30, "width": 640, "height": 360 },
+    { "op": "clip", "preset": "follow_chase", "params": { "target": "robot.0", "start": 8 }, "name": "chase", "start": 8, "end": 9.5, "fps": 30, "width": 1280, "height": 720, "motionBlurSamples": 4 }
+  ]
+}

@@ -70,6 +70,8 @@ export interface ReplaySource {
   readonly duration: number;
   /** Coordinate system name of every pose (`Field3dRendererCommand.coordinateSystem`) and the field id. */
   readonly frame: { field: string; coordinateSystem: string };
+  /** Times (s) of the underlying log samples; interpolation happens between these. */
+  readonly sampleTimes: number[];
   /** Every entity that appears anywhere in the run. May scan the whole run the first time. */
   entities(): EntityInfo[];
   /** Interpolated scene at time t (clamped to the run). */
@@ -104,6 +106,7 @@ export class InterpolatingReplaySource implements ReplaySource {
   readonly endTime: number;
   readonly duration: number;
   readonly frame: { field: string; coordinateSystem: string };
+  readonly sampleTimes: number[];
 
   private rawCache = new Map<number, Field3dRendererCommand>();
   /** One tracker per object index; created on first need and fed sequentially. */
@@ -115,6 +118,7 @@ export class InterpolatingReplaySource implements ReplaySource {
     private options: InterpolationOptions = DEFAULT_INTERPOLATION
   ) {
     const times = provider.times;
+    this.sampleTimes = times;
     if (times.length === 0) throw new Error("ReplaySource needs at least one sample time");
     this.startTime = times[0];
     this.endTime = times[times.length - 1];
@@ -356,6 +360,15 @@ export class InterpolatingReplaySource implements ReplaySource {
   }
 
   entityPose(id: string, t: number): Pose3d | null {
-    return this.entityStates(t).find((e) => e.id === id)?.pose ?? null;
+    // Direct lookup in the sample's id table: cheap enough for the follow spring to call 240 times per second
+    const sample = this.sample(t);
+    for (let o = 0; o < sample.entityIds.length; o++) {
+      const i = sample.entityIds[o].indexOf(id);
+      if (i < 0) continue;
+      const obj = sample.command.objects[o];
+      const pose = obj.poses[i].pose;
+      return obj.type === "gamePiece" && isParked(pose) ? null : pose;
+    }
+    return null;
   }
 }

@@ -54,6 +54,12 @@ function seededOrientation(index: number): THREE.Quaternion {
 }
 
 export default class GamePieceManager extends ObjectManager<Field3dRendererCommand_GamePieceObj> {
+  /**
+   * Offline (cinematic) rendering sets this: rolling/spin is integrated over successive renders, so it depends on which
+   * frames were drawn before, and a preview at t could never match a render frame at t. With it set, balls keep a fixed
+   * seeded orientation (no roll or spin), which makes every frame a pure function of (replay, shot, t).
+   */
+  static stateless = false;
   private gamePieces: { [key: string]: THREE.Mesh };
   private instances: ResizableInstancedMesh | null = null;
   private lastVariant = "";
@@ -138,7 +144,9 @@ export default class GamePieceManager extends ObjectManager<Field3dRendererComma
     const step = position.clone().sub(state.position);
     const distance = step.length();
     const dt = time !== null && state.lastTime !== null ? time - state.lastTime : null;
-    if (distance > MAX_FRAME_STEP || (dt !== null && Math.abs(dt) > 0.5)) {
+    if (GamePieceManager.stateless) {
+      state.orientation = seededOrientation(index);
+    } else if (distance > MAX_FRAME_STEP || (dt !== null && Math.abs(dt) > 0.5)) {
       // Timeline jump or a piece reappearing elsewhere: restart from a fresh orientation
       state.orientation = seededOrientation(index);
       state.hasRolled = false;
